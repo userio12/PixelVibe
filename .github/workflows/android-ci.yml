@@ -1,3 +1,4 @@
+# Auto-trigger test
 name: Android CI
 
 on:
