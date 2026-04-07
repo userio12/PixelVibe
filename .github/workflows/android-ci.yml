@@ -37,14 +37,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download MPV AAR from reference project
+        run: |
+          mkdir -p app/libs
+          echo "Downloading MPV AAR from reference project..."
+          gh release download --repo marlboro-advance/mpvEx --pattern '*.aar' --output app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || \
+          curl -L -o app/libs/mpv-android-lib-v0.0.1.aar \
+            "https://github.com/marlboro-advance/mpvEx/raw/master/app/libs/mpv-android-lib-v0.0.1.aar"
+          ls -lh app/libs/mpv-android-lib-v0.0.1.aar
+
       - name: Validate MPV AAR
         run: |
-          if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ]; then
-            echo "::error::MPV AAR not found at app/libs/mpv-android-lib-v0.0.1.aar"
-            echo "::error::Please extract it from the reference project into app/libs/"
+          if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ] || [ "$(stat -c%s app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || stat -f%z app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null)" -lt 1000000 ]; then
+            echo "::error::MPV AAR not found or too small — download failed"
             exit 1
           fi
-          echo "✓ MPV AAR found"
+          echo "✓ MPV AAR downloaded successfully ($(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1))"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -94,12 +102,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate MPV AAR
+      - name: Download MPV AAR from reference project
         run: |
+          mkdir -p app/libs
+          curl -sL -o app/libs/mpv-android-lib-v0.0.1.aar \
+            "https://github.com/marlboro-advance/mpvEx/raw/master/app/libs/mpv-android-lib-v0.0.1.aar"
           if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ]; then
-            echo "::error::MPV AAR not found at app/libs/mpv-android-lib-v0.0.1.aar"
+            echo "::error::MPV AAR download failed"
             exit 1
           fi
+          echo "✓ MPV AAR ready"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -246,12 +258,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate MPV AAR
+      - name: Download MPV AAR from reference project
         run: |
+          mkdir -p app/libs
+          curl -sL -o app/libs/mpv-android-lib-v0.0.1.aar \
+            "https://github.com/marlboro-advance/mpvEx/raw/master/app/libs/mpv-android-lib-v0.0.1.aar"
           if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ]; then
-            echo "::error::MPV AAR not found"
+            echo "::error::MPV AAR download failed"
             exit 1
           fi
+          echo "✓ MPV AAR ready"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4

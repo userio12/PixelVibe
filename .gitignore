@@ -46,6 +46,9 @@ caches/
 !app/debug.keystore
 app/release/
 
+# Large binary files (downloaded during CI)
+app/libs/*.aar
+
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 .cxx/
