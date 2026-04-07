@@ -113,7 +113,6 @@ dependencies {
     // UI Components
     implementation(libs.accompanist.permissions)
     implementation(libs.compose.prefs)
-    implementation(libs.seeker)
     implementation(libs.lazy.column.scrollbar)
     implementation(libs.reorderable)
 

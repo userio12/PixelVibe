@@ -12,8 +12,7 @@ kotlinx-serialization = "1.10.0"
 kotlinx-collections = "0.4.0"
 constraintlayout-compose = "1.1.1"
 accompanist-permissions = "0.37.3"
-compose-prefs = "2.0.0"
-seeker = "1.0.0"
+compose-prefs = "1.1.1"
 lazy-column-scrollbar = "2.2.0"
 reorderable = "3.0.0"
 okhttp = "5.3.2"
@@ -65,7 +64,6 @@ kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotli
 constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraintlayout-compose" }
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist-permissions" }
 compose-prefs = { group = "me.zhanghai.compose.preference", name = "library", version.ref = "compose-prefs" }
-seeker = { group = "com.github.vivvvek", name = "seeker", version.ref = "seeker" }
 lazy-column-scrollbar = { group = "com.github.nanihadesuka", name = "LazyColumnScrollbar", version.ref = "lazy-column-scrollbar" }
 reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 
