@@ -127,7 +127,6 @@ dependencies {
     // Media
     implementation(libs.androidx.media)
     implementation(libs.truetype.parser)
-    implementation(libs.fsaf)
     implementation(libs.coil.compose)
 
     // MPV AAR (local library)
