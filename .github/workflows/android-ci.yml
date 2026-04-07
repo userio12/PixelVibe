@@ -2,13 +2,13 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'reference/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
