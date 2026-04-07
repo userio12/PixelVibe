@@ -1,15 +1,15 @@
 [versions]
 agp = "8.13.0"
-kotlin = "2.3.20"
+kotlin = "2.0.21"
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.11.0"
 composeBom = "2025.10.01"
-koin = "4.2.0"
+koin = "3.5.6"
 room = "2.8.4"
-ksp = "2.3.20-2.0.3"
-kotlinx-serialization = "1.10.0"
-kotlinx-collections = "0.4.0"
+ksp = "2.0.21-1.0.25"
+kotlinx-serialization = "1.7.3"
+kotlinx-collections = "0.3.8"
 constraintlayout-compose = "1.1.1"
 accompanist-permissions = "0.37.3"
 compose-prefs = "1.1.1"
@@ -45,11 +45,9 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
 
 # DI
-koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
-koin-core = { group = "io.insert-koin", name = "koin-core" }
-koin-android = { group = "io.insert-koin", name = "koin-android" }
-koin-compose = { group = "io.insert-koin", name = "koin-compose" }
-koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
+koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
 
 # Database
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

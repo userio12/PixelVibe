@@ -95,11 +95,9 @@ dependencies {
     implementation(libs.constraintlayout.compose)
 
     // DI - Koin
-    implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    implementation(libs.koin.compose.viewmodel)
 
     // Database - Room
     implementation(libs.room.runtime)
