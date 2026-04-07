@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">PixelVibe</string>
+    <string name="generic_reset">Reset</string>
+    <string name="generic_share">Share</string>
+    <string name="generic_confirm">Confirm</string>
+    <string name="generic_cancel">Cancel</string>
+    <string name="generic_ok">OK</string>
+    <string name="generic_unit_ms">ms</string>
+    <string name="generic_disabled">Disabled</string>
+    <string name="pref_preferences">Preferences</string>
+
+    <!-- Theme names -->
+    <string name="theme_default">Default</string>
+    <string name="theme_dynamic">Dynamic</string>
+    <string name="theme_catppuccin">Catppuccin</string>
+    <string name="theme_gruvbox">Gruvbox</string>
+    <string name="theme_tokyo_night">Tokyo Night</string>
+    <string name="theme_nord">Nord</string>
+    <string name="theme_dracula">Dracula</string>
+
+    <!-- Player -->
+    <string name="player_sheets_tracks_off">Off</string>
+    <string name="player_sheets_subtitles_settings_title">Subtitle settings</string>
+    <string name="player_sheets_video_settings_title">Video settings</string>
+    <string name="player_sheets_deband_none">None</string>
+
+    <!-- Player orientation -->
+    <string name="pref_player_orientation_free">Free</string>
+    <string name="pref_player_orientation_video">Video</string>
+    <string name="pref_player_orientation_portrait">Portrait</string>
+    <string name="pref_player_orientation_landscape">Landscape</string>
+    <string name="pref_player_orientation_sensor_landscape">Sensor landscape</string>
+
+    <!-- Browser tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_recents">Recents</string>
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_network">Network</string>
+
+    <!-- Video labels -->
+    <string name="video_label_new">NEW</string>
+
+    <!-- Settings Search -->
+    <string name="settings_search_hint">Search settings…</string>
+    <string name="settings_search_no_results">No settings found</string>
+    <string name="settings_search_title">Search</string>
+</resources>

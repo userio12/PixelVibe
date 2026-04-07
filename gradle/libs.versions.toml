@@ -1,0 +1,84 @@
+[versions]
+agp = "8.13.0"
+kotlin = "2.1.0"
+coreKtx = "1.17.0"
+lifecycleRuntimeKtx = "2.9.2"
+activityCompose = "1.11.0"
+composeBom = "2025.10.01"
+koin = "4.2.0"
+room = "2.8.4"
+ksp = "2.1.0-1.0.29"
+kotlinx-serialization = "1.10.0"
+kotlinx-collections = "0.4.0"
+constraintlayout-compose = "1.1.1"
+accompanist-permissions = "0.37.3"
+compose-prefs = "2.2.0"
+seeker = "2.0.1"
+lazy-column-scrollbar = "2.2.0"
+reorderable = "3.0.0"
+okhttp = "5.3.2"
+smbj = "0.14.0"
+commons-net = "3.13.0"
+sardine-android = "0.8"
+nanohttpd = "2.3.1"
+media = "1.7.1"
+truetype-parser = "2.1.4"
+fsaf = "1.1.3"
+coil = "2.7.0"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+
+# DI
+koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
+koin-core = { group = "io.insert-koin", name = "koin-core" }
+koin-android = { group = "io.insert-koin", name = "koin-android" }
+koin-compose = { group = "io.insert-koin", name = "koin-compose" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
+
+# Database
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinx-collections" }
+
+# UI
+constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraintlayout-compose" }
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist-permissions" }
+compose-prefs = { group = "me.zhanghai.compose.preference", name = "library", version.ref = "compose-prefs" }
+seeker = { group = "dev.vivvvek.seeker", name = "seeker", version.ref = "seeker" }
+lazy-column-scrollbar = { group = "com.github.nanihadesuka", name = "LazyColumnScrollbar", version.ref = "lazy-column-scrollbar" }
+reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
+
+# Networking
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+smbj = { group = "com.hierynomus", name = "smbj", version.ref = "smbj" }
+commons-net = { group = "commons-net", name = "commons-net", version.ref = "commons-net" }
+sardine-android = { group = "com.github.thegrizzlylabs", name = "sardine-android", version.ref = "sardine-android" }
+nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version.ref = "nanohttpd" }
+
+# Media
+androidx-media = { group = "androidx.media", name = "media", version.ref = "media" }
+truetype-parser = { group = "io.github.yubyf", name = "truetypeparser-light", version.ref = "truetype-parser" }
+fsaf = { group = "com.github.K1rakishou", name = "FSAF", version.ref = "fsaf" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }

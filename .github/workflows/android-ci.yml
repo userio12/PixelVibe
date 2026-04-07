@@ -1,0 +1,319 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'reference/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'reference/**'
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  TERM: dumb
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Build Debug APKs (all ABIs + Universal)
+  # ─────────────────────────────────────────────
+  build-debug:
+    name: Build Debug APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate MPV AAR
+        run: |
+          if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ]; then
+            echo "::error::MPV AAR not found at app/libs/mpv-android-lib-v0.0.1.aar"
+            echo "::error::Please extract it from the reference project into app/libs/"
+            exit 1
+          fi
+          echo "✓ MPV AAR found"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+
+      - name: Generate KSP & Room sources
+        run: ./gradlew kspDebugKotlin --no-daemon
+
+      - name: Build Debug APKs (ABI splits)
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload Debug APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apks
+          path: app/build/outputs/apk/**/*.apk
+          retention-days: 14
+
+      - name: Debug APK summary
+        run: |
+          echo "### 📱 Debug APKs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| ABI | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|------|" >> $GITHUB_STEP_SUMMARY
+          for apk in app/build/outputs/apk/debug/*.apk; do
+            name=$(basename "$apk")
+            size=$(du -h "$apk" | cut -f1)
+            echo "| \`$name\` | $size |" >> $GITHUB_STEP_SUMMARY
+          done
+
+  # ─────────────────────────────────────────────
+  # Job 2: Build Release APKs (all ABIs + Universal)
+  # ─────────────────────────────────────────────
+  build-release:
+    name: Build Release APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-debug
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate MPV AAR
+        run: |
+          if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ]; then
+            echo "::error::MPV AAR not found at app/libs/mpv-android-lib-v0.0.1.aar"
+            exit 1
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+
+      # Create a debug keystore for release signing in CI
+      - name: Create debug keystore for CI release build
+        run: |
+          mkdir -p app/release
+          keytool -genkey -v \
+            -keystore app/release/release.keystore \
+            -alias pixelvibe-release \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android123 \
+            -keypass android123 \
+            -dname "CN=PixelVibe, OU=Dev, O=PixelVibe, L=Unknown, ST=Unknown, C=US" \
+            -noprompt
+
+      - name: Build Release APKs (ABI splits)
+        run: |
+          cd app
+          KEYSTORE_PATH=release.keystore \
+          KEYSTORE_PASSWORD=android123 \
+          KEY_ALIAS=pixelvibe-release \
+          KEY_PASSWORD=android123 \
+          ../gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Upload Release APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apks
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Release APK summary
+        run: |
+          echo "### 🚀 Release APKs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| ABI | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|------|" >> $GITHUB_STEP_SUMMARY
+          for apk in app/build/outputs/apk/release/*.apk; do
+            name=$(basename "$apk")
+            size=$(du -h "$apk" | cut -f1)
+            echo "| \`$name\` | $size |" >> $GITHUB_STEP_SUMMARY
+          done
+
+  # ─────────────────────────────────────────────
+  # Job 3: Lint & Static Analysis
+  # ─────────────────────────────────────────────
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+
+      - name: Run Android Lint
+        run: ./gradlew lintDebug --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: Upload Lint Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          retention-days: 14
+
+      - name: Lint summary
+        if: always()
+        run: |
+          if [ -f "app/build/reports/lint-results-debug.html" ]; then
+            errors=$(grep -c 'error' app/build/reports/lint-results-debug.html 2>/dev/null || echo "0")
+            warnings=$(grep -c 'warning' app/build/reports/lint-results-debug.html 2>/dev/null || echo "0")
+            echo "### 🔍 Lint Results" >> $GITHUB_STEP_SUMMARY
+            echo "- Errors: $errors" >> $GITHUB_STEP_SUMMARY
+            echo "- Warnings: $warnings" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ─────────────────────────────────────────────
+  # Job 4: Unit Tests
+  # ─────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        continue-on-error: true
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: app/build/reports/tests/testDebugUnitTest/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────
+  # Job 5: Build App Bundle (AAB) for Play Store
+  # ─────────────────────────────────────────────
+  build-bundle:
+    name: Build App Bundle (AAB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-debug
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate MPV AAR
+        run: |
+          if [ ! -f "app/libs/mpv-android-lib-v0.0.1.aar" ]; then
+            echo "::error::MPV AAR not found"
+            exit 1
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+
+      - name: Build App Bundle
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle
+          path: app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: AAB summary
+        run: |
+          echo "### 📦 App Bundle" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for aab in app/build/outputs/bundle/release/*.aab; do
+            name=$(basename "$aab")
+            size=$(du -h "$aab" | cut -f1)
+            echo "- \`$name\`: $size" >> $GITHUB_STEP_SUMMARY
+          done
+
+  # ─────────────────────────────────────────────
+  # Job 6: Dependency Check
+  # ─────────────────────────────────────────────
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission to Gradle
+        run: chmod +x ./gradlew
+
+      - name: Check dependencies
+        run: ./gradlew app:dependencies --configuration releaseRuntimeClasspath --no-daemon
+
+      - name: Dependency report
+        run: ./gradlew app:dependencies --no-daemon > dependency-report.txt 2>&1 || true
+
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report
+          path: dependency-report.txt
+          retention-days: 14
