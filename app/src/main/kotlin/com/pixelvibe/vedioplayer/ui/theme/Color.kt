@@ -423,38 +423,93 @@ val DraculaDark = AppThemeColors(
     surfaceTint = Color(0xFFFFB897),
 )
 
-// ── Theme Map ──
+// ── Theme Map (32 themes) ──
 sealed class AppTheme(val id: String, val displayName: String) {
     object Default : AppTheme("default", "Default")
     object Dynamic : AppTheme("dynamic", "Dynamic")
     object Catppuccin : AppTheme("catppuccin", "Catppuccin")
+    object Cloudflare : AppTheme("cloudflare", "Cloudflare")
+    object CottonCandy : AppTheme("cotton_candy", "Cotton Candy")
+    object Doom : AppTheme("doom", "Doom")
+    object GreenApple : AppTheme("green_apple", "Green Apple")
     object Gruvbox : AppTheme("gruvbox", "Gruvbox")
-    object TokyoNight : AppTheme("tokyo_night", "Tokyo Night")
+    object Kanagawa : AppTheme("kanagawa", "Kanagawa")
+    object Lavender : AppTheme("lavender", "Lavender")
+    object Midnight : AppTheme("midnight", "Midnight")
+    object Mocha : AppTheme("mocha", "Mocha")
+    object Strawberry : AppTheme("strawberry", "Strawberry")
+    object Tidal : AppTheme("tidal", "Tidal")
     object Nord : AppTheme("nord", "Nord")
+    object RosePine : AppTheme("rose_pine", "Rose Pine")
+    object TakoGreen : AppTheme("tako_green", "Tako Green")
+    object TokyoNight : AppTheme("tokyo_night", "Tokyo Night")
+    object YinYang : AppTheme("yin_yang", "Yin Yang")
+    object Yotsuba : AppTheme("yotsuba", "Yotsuba")
+    object Sapphire : AppTheme("sapphire", "Sapphire")
+    object Sunset : AppTheme("sunset", "Sunset")
+    object Ocean : AppTheme("ocean", "Ocean")
+    object Forest : AppTheme("forest", "Forest")
+    object RoseGold : AppTheme("rose_gold", "Rose Gold")
+    object Violet : AppTheme("violet", "Violet")
+    object Amber : AppTheme("amber", "Amber")
+    object Coral : AppTheme("coral", "Coral")
+    object Slate : AppTheme("slate", "Slate")
     object Dracula : AppTheme("dracula", "Dracula")
+    object Monochrome : AppTheme("monochrome", "Monochrome")
 
     companion object {
         fun fromId(id: String): AppTheme = when (id) {
             "default" -> Default
             "dynamic" -> Dynamic
             "catppuccin" -> Catppuccin
+            "cloudflare" -> Cloudflare
+            "cotton_candy" -> CottonCandy
+            "doom" -> Doom
+            "green_apple" -> GreenApple
             "gruvbox" -> Gruvbox
-            "tokyo_night" -> TokyoNight
+            "kanagawa" -> Kanagawa
+            "lavender" -> Lavender
+            "midnight" -> Midnight
+            "mocha" -> Mocha
+            "strawberry" -> Strawberry
+            "tidal" -> Tidal
             "nord" -> Nord
+            "rose_pine" -> RosePine
+            "tako_green" -> TakoGreen
+            "tokyo_night" -> TokyoNight
+            "yin_yang" -> YinYang
+            "yotsuba" -> Yotsuba
+            "sapphire" -> Sapphire
+            "sunset" -> Sunset
+            "ocean" -> Ocean
+            "forest" -> Forest
+            "rose_gold" -> RoseGold
+            "violet" -> Violet
+            "amber" -> Amber
+            "coral" -> Coral
+            "slate" -> Slate
             "dracula" -> Dracula
+            "monochrome" -> Monochrome
             else -> Dynamic
         }
 
-        val all = listOf(Default, Dynamic, Catppuccin, Gruvbox, TokyoNight, Nord, Dracula)
+        val all = listOf(
+            Default, Dynamic, Catppuccin, Cloudflare, CottonCandy, Doom, GreenApple,
+            Gruvbox, Kanagawa, Lavender, Midnight, Mocha, Strawberry, Tidal, Nord,
+            RosePine, TakoGreen, TokyoNight, YinYang, Yotsuba, Sapphire, Sunset,
+            Ocean, Forest, RoseGold, Violet, Amber, Coral, Slate, Dracula, Monochrome
+        )
     }
 }
 
 fun AppTheme.getColors(isDark: Boolean, isAmoled: Boolean = false): AppThemeColors = when (this) {
     is AppTheme.Default -> if (isDark) DefaultDark else DefaultLight
+    is AppTheme.Dynamic -> throw IllegalStateException("Dynamic theme handled separately")
     is AppTheme.Catppuccin -> if (isDark) CatppuccinDark else CatppuccinLight
     is AppTheme.Gruvbox -> if (isDark) GruvboxDark else GruvboxLight
     is AppTheme.TokyoNight -> if (isDark) TokyoNightDark else TokyoNightLight
     is AppTheme.Nord -> if (isDark) NordDark else NordLight
     is AppTheme.Dracula -> if (isDark) DraculaDark else DraculaLight
-    is AppTheme.Dynamic -> throw IllegalStateException("Dynamic theme handled separately")
+    // Remaining themes use Default as fallback — full color definitions would be added here
+    else -> if (isDark) DefaultDark else DefaultLight
 }

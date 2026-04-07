@@ -100,6 +100,13 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <!-- Network Streaming Provider - enables URI-based streaming of network files -->
+        <provider
+            android:name=".network.NetworkStreamingProvider"
+            android:authorities="${applicationId}.network"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <!-- File Provider for sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
