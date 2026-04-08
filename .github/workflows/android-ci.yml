@@ -83,9 +83,8 @@ jobs:
 
       - name: Create debug keystore for signing
         run: |
-          mkdir -p app/release
           keytool -genkey -v \
-            -keystore app/release/debug.keystore \
+            -keystore app/debug.keystore \
             -alias androiddebugkey \
             -keyalg RSA \
             -keysize 2048 \
