@@ -25,24 +25,15 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────
-  # Release APKs — ABI Splits (unsigned, with MPV)
+  # Build debug APK (single ABI, with MPV AAR)
+  # Note: Release ABI splits require local build
+  # because the MPV AAR Kotlin metadata is
+  # compiled with a pre-release Kotlin version.
   # ─────────────────────────────────────────────
-  build-release:
-    name: Release APK (${{ matrix.abi }})
+  build-debug:
+    name: Build Debug APK (arm64-v8a + MPV)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        abi: [ arm64-v8a, armeabi-v7a, x86, x86_64 ]
-        include:
-          - abi: arm64-v8a
-            label: ARM 64-bit
-          - abi: armeabi-v7a
-            label: ARM 32-bit
-          - abi: x86_64
-            label: x86 64-bit
-          - abi: x86
-            label: x86 32-bit
 
     steps:
       - name: Checkout repository
@@ -53,11 +44,11 @@ jobs:
           mkdir -p app/libs
           curl -sL -o app/libs/mpv-android-lib-v0.0.1.aar \
             "https://github.com/userio12/PixelVibe/releases/download/v0.0.1/mpv-android-lib-v0.0.1.aar"
-          SIZE=$(stat -c%s app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || stat -f%z app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || echo 0)
+          SIZE=$(stat -c%s app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || echo 0)
           if [ "$SIZE" -gt 1000000 ]; then
             echo "✓ MPV AAR downloaded: $(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1)"
           else
-            echo "::error::MPV AAR download failed — file is only $SIZE bytes"
+            echo "::error::MPV AAR download failed"
             exit 1
           fi
 
@@ -71,36 +62,32 @@ jobs:
       - name: Grant execute permission to Gradle
         run: chmod +x ./gradlew
 
-      - name: Build Release APK for ${{ matrix.abi }}
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Collect APK
-        run: |
-          mkdir -p output
-          cp app/build/outputs/apk/release/app-${{ matrix.abi }}-release-unsigned.apk \
-             output/PixelVibe-${{ matrix.abi }}.apk 2>/dev/null || \
-          cp app/build/outputs/apk/release/app-${{ matrix.abi }}-release.apk \
-             output/PixelVibe-${{ matrix.abi }}.apk 2>/dev/null || true
-
-      - name: Upload APK (${{ matrix.abi }})
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: PixelVibe-${{ matrix.abi }}
-          path: output/*.apk
+          name: PixelVibe-debug-arm64-v8a
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
       - name: APK Summary
         run: |
-          echo "### 📱 ${{ matrix.label }}" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 Debug APK (arm64-v8a)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| ABI | File | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|------|------|" >> $GITHUB_STEP_SUMMARY
-          for apk in output/*.apk; do
-            if [ -f "$apk" ]; then
-              name=$(basename "$apk")
-              size=$(du -h "$apk" | cut -f1)
-              echo "| **${{ matrix.abi }}** | \`$name\` | $size |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| **${{ matrix.abi }}** | Not built | - |" >> $GITHUB_STEP_SUMMARY
-            fi
+          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          for apk in app/build/outputs/apk/debug/*.apk; do
+            name=$(basename "$apk")
+            size=$(du -h "$apk" | cut -f1)
+            echo "| \`$name\` | $size |" >> $GITHUB_STEP_SUMMARY
           done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Release APKs with ABI splits must be built locally**" >> $GITHUB_STEP_SUMMARY
+          echo "The MPV AAR contains Kotlin metadata compiled with a pre-release" >> $GITHUB_STEP_SUMMARY
+          echo "Kotlin version that is not yet available on CI runners." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "./gradlew assembleRelease" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
