@@ -115,4 +115,7 @@ dependencies {
     implementation(libs.androidx.media)
     implementation(libs.truetype.parser)
     implementation(libs.coil.compose)
+
+    // MPV AAR (local library)
+    implementation(files("libs/mpv-android-lib-v0.0.1.aar"))
 }

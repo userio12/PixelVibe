@@ -1,14 +1,17 @@
 package com.pixelvibe.vedioplayer.ui.player
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.pixelvibe.vedioplayer.database.entities.PlaybackStateEntity
 import com.pixelvibe.vedioplayer.database.repositories.PlaybackHistoryRepository
 import com.pixelvibe.vedioplayer.domain.AudioTrack
 import com.pixelvibe.vedioplayer.domain.SubtitleTrack
+import is.xyz.mpv.MPVLib
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * Sealed class representing repeat modes.
@@ -181,7 +184,94 @@ class PlayerViewModel(
         // TODO: Implement when video engine is added
     }
 
-    // ── Utility ──
+    // ── MPV Event Integration ──
+
+    /**
+     * Handle MPV property changes from the observer.
+     */
+    fun onPropertyChange(property: String, value: Any?) {
+        when (property) {
+            "pause" -> {
+                val paused = value as? Boolean ?: true
+                _state.update { it.copy(isPaused = paused, isPlaying = !paused) }
+            }
+            "paused-for-cache" -> {
+                val buffering = value as? Boolean ?: false
+                _state.update { it.copy(isBuffering = buffering) }
+            }
+            "time-pos" -> {
+                val pos = when (value) {
+                    is Double -> value
+                    is Long -> value.toDouble()
+                    is Int -> value.toDouble()
+                    else -> 0.0
+                }
+                _state.update { it.copy(currentPosition = pos) }
+            }
+            "duration" -> {
+                val dur = when (value) {
+                    is Double -> value
+                    is Long -> value.toDouble()
+                    is Int -> value.toDouble()
+                    else -> 0.0
+                }
+                _state.update { it.copy(duration = dur) }
+            }
+            "eof-reached" -> {
+                val eof = value as? Boolean ?: false
+                _state.update { it.copy(isEofReached = eof) }
+            }
+            "video-params/aspect" -> {
+                val aspect = when (value) {
+                    is Double -> value
+                    is Long -> value.toDouble()
+                    is Int -> value.toDouble()
+                    else -> 0.0
+                }
+                _state.update { it.copy(videoAspect = aspect) }
+            }
+            "video-params/w" -> {
+                val w = (value as? Long)?.toInt() ?: (value as? Int) ?: 0
+                _state.update { it.copy(videoWidth = w) }
+            }
+            "video-params/h" -> {
+                val h = (value as? Long)?.toInt() ?: (value as? Int) ?: 0
+                _state.update { it.copy(videoHeight = h) }
+            }
+            "speed" -> {
+                val speed = when (value) {
+                    is Double -> value
+                    is Long -> value.toDouble()
+                    is Int -> value.toDouble()
+                    else -> 1.0
+                }
+                _state.update { it.copy(playbackSpeed = speed) }
+            }
+            "chapter" -> {
+                val ch = (value as? Long)?.toInt() ?: (value as? Int) ?: 0
+                _state.update { it.copy(chapter = ch) }
+            }
+            "media-title" -> {
+                val title = value as? String ?: ""
+                _state.update { it.copy(mediaTitle = title) }
+            }
+            "file-path" -> {
+                val path = value as? String ?: ""
+                _state.update { it.copy(filePath = path) }
+            }
+        }
+    }
+
+    /**
+     * Handle MPV events.
+     */
+    fun onEvent(event: MPVLib.MpvEvent) {
+        when (event) {
+            MPVLib.MpvEvent.END_FILE -> _state.update { it.copy(isLoading = false) }
+            MPVLib.MpvEvent.SHUTDOWN -> {}
+            else -> {}
+        }
+    }
 
     companion object {
         fun formatTime(seconds: Double): String {
