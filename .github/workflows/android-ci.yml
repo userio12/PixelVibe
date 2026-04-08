@@ -15,39 +15,74 @@ on:
       - 'reference/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  TERM: dumb
+
 jobs:
-  verify:
-    name: Verify Project
+  # ─────────────────────────────────────────────
+  # Release APKs — ABI Splits (unsigned, with MPV)
+  # Strips Kotlin metadata from AAR so CI can compile
+  # ─────────────────────────────────────────────
+  build-release:
+    name: Release APK (${{ matrix.abi }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        abi: [ arm64-v8a, armeabi-v7a, x86, x86_64 ]
+        include:
+          - abi: arm64-v8a
+            label: ARM 64-bit
+          - abi: armeabi-v7a
+            label: ARM 32-bit
+          - abi: x86_64
+            label: x86 64-bit
+          - abi: x86
+            label: x86 32-bit
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check MPV AAR exists in release
-        run: |
-          HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" \
-            "https://github.com/userio12/PixelVibe/releases/download/v0.0.1/mpv-android-lib-v0.0.1.aar")
-          if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "200" ]; then
-            echo "✓ MPV AAR available in GitHub Releases"
-          else
-            echo "::error::MPV AAR not found in releases (HTTP $HTTP_CODE)"
-            exit 1
-          fi
-
-      - name: Download MPV AAR
+      - name: Download & patch MPV AAR
         run: |
           mkdir -p app/libs
           curl -sL -o app/libs/mpv-android-lib-v0.0.1.aar \
             "https://github.com/userio12/PixelVibe/releases/download/v0.0.1/mpv-android-lib-v0.0.1.aar"
           SIZE=$(stat -c%s app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || echo 0)
-          if [ "$SIZE" -gt 1000000 ]; then
-            echo "✓ MPV AAR downloaded: $(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1)"
-          else
+          if [ "$SIZE" -lt 1000000 ]; then
             echo "::error::MPV AAR download failed"
             exit 1
           fi
+
+          # Strip Kotlin metadata from AAR's classes.jar to avoid
+          # Kotlin version incompatibility with CI compiler
+          cd app/libs
+          mkdir -p aar_work
+          cd aar_work
+          unzip -q ../mpv-android-lib-v0.0.1.aar
+          if [ -d META-INF ]; then
+            rm -rf META-INF/*.kotlin_module 2>/dev/null || true
+          fi
+          if [ -f classes.jar ]; then
+            mkdir -p jar_work
+            cd jar_work
+            unzip -q ../classes.jar
+            rm -rf META-INF/*.kotlin_module 2>/dev/null || true
+            jar cf ../classes-new.jar *
+            cd ..
+            mv classes-new.jar classes.jar
+            rm -rf jar_work
+          fi
+          zip -qr ../mpv-android-lib-v0.0.1.aar *
+          cd ../..
+          rm -rf app/libs/aar_work
+          echo "✓ MPV AAR patched: $(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1)"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -59,26 +94,36 @@ jobs:
       - name: Grant execute permission to Gradle
         run: chmod +x ./gradlew
 
-      - name: Verify dependencies resolve
-        run: ./gradlew dependencies --configuration debugRuntimeClasspath --no-daemon || true
+      - name: Build Release APK for ${{ matrix.abi }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Project Summary
+      - name: Collect APK
         run: |
-          echo "### 📱 PixelVibe — Playback Branch" >> $GITHUB_STEP_SUMMARY
+          mkdir -p output
+          cp app/build/outputs/apk/release/app-${{ matrix.abi }}-release-unsigned.apk \
+             output/PixelVibe-${{ matrix.abi }}.apk 2>/dev/null || \
+          cp app/build/outputs/apk/release/app-${{ matrix.abi }}-release.apk \
+             output/PixelVibe-${{ matrix.abi }}.apk 2>/dev/null || true
+
+      - name: Upload APK (${{ matrix.abi }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelVibe-${{ matrix.abi }}
+          path: output/*.apk
+          retention-days: 30
+
+      - name: APK Summary
+        run: |
+          echo "### 📱 ${{ matrix.label }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ MPV AAR verified ($(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1))" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ⚠️ Build Instructions" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The MPV AAR contains Kotlin metadata compiled with a pre-release" >> $GITHUB_STEP_SUMMARY
-          echo "Kotlin version. **CI builds cannot compile it** — you must build locally:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "git checkout feature/mpv-playback" >> $GITHUB_STEP_SUMMARY
-          echo "./gradlew assembleDebug    # debug APK" >> $GITHUB_STEP_SUMMARY
-          echo "./gradlew assembleRelease  # release APKs with ABI splits" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Output APKs:**" >> $GITHUB_STEP_SUMMARY
-          echo "- \`app/build/outputs/apk/debug/\` — debug APK" >> $GITHUB_STEP_SUMMARY
-          echo "- \`app/build/outputs/apk/release/\` — release APKs (arm64-v8a, armeabi-v7a, x86, x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "| ABI | File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|------|------|" >> $GITHUB_STEP_SUMMARY
+          for apk in output/*.apk; do
+            if [ -f "$apk" ]; then
+              name=$(basename "$apk")
+              size=$(du -h "$apk" | cut -f1)
+              echo "| **${{ matrix.abi }}** | \`$name\` | $size |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| **${{ matrix.abi }}** | Not built | - |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
