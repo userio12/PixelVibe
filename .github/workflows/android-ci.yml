@@ -62,26 +62,33 @@ jobs:
 
           # Strip Kotlin metadata from AAR's classes.jar to avoid
           # Kotlin version incompatibility with CI compiler
+          TMPDIR=$(mktemp -d)
           cd app/libs
-          mkdir -p aar_work
-          cd aar_work
-          unzip -q ../mpv-android-lib-v0.0.1.aar
-          if [ -d META-INF ]; then
-            rm -rf META-INF/*.kotlin_module 2>/dev/null || true
+
+          # Unpack AAR
+          unzip -q mpv-android-lib-v0.0.1.aar -d "$TMPDIR"
+
+          # Unpack classes.jar, remove kotlin_module, repack
+          if [ -f "$TMPDIR/classes.jar" ]; then
+            CLASSES_DIR="$TMPDIR/classes_extracted"
+            mkdir -p "$CLASSES_DIR"
+            cd "$CLASSES_DIR"
+            unzip -q "$TMPDIR/classes.jar"
+            rm -rf META-INF
+            jar cf "$TMPDIR/classes.jar" *
+            cd "$TMPDIR"
+            rm -rf classes_extracted
           fi
-          if [ -f classes.jar ]; then
-            mkdir -p jar_work
-            cd jar_work
-            unzip -q ../classes.jar
-            rm -rf META-INF/*.kotlin_module 2>/dev/null || true
-            jar cf ../classes-new.jar *
-            cd ..
-            mv classes-new.jar classes.jar
-            rm -rf jar_work
-          fi
+
+          # Remove top-level META-INF from AAR if exists
+          rm -rf "$TMPDIR/META-INF"
+
+          # Repack AAR
+          cd "$TMPDIR"
           zip -qr ../mpv-android-lib-v0.0.1.aar *
           cd ../..
-          rm -rf app/libs/aar_work
+          rm -rf "$TMPDIR"
+
           echo "✓ MPV AAR patched: $(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1)"
 
       - name: Set up JDK 17
