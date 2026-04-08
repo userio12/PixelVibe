@@ -48,6 +48,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download MPV AAR
+        run: |
+          mkdir -p app/libs
+          curl -sL -o app/libs/mpv-android-lib-v0.0.1.aar \
+            "https://github.com/userio12/PixelVibe/releases/download/v0.0.1/mpv-android-lib-v0.0.1.aar"
+          SIZE=$(stat -c%s app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || stat -f%z app/libs/mpv-android-lib-v0.0.1.aar 2>/dev/null || echo 0)
+          if [ "$SIZE" -gt 1000000 ]; then
+            echo "✓ MPV AAR downloaded: $(du -h app/libs/mpv-android-lib-v0.0.1.aar | cut -f1)"
+          else
+            echo "::error::MPV AAR download failed — file is only $SIZE bytes"
+            exit 1
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
