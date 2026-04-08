@@ -1,7 +1,7 @@
 package com.pixelvibe.vedioplayer.ui.player
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBackIosNew
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Bookmarks
@@ -33,7 +33,7 @@ enum class PlayerButtonType(
     val icon: ImageVector,
     val contentDescription: String
 ) {
-    BACK_ARROW(Icons.AutoMirrored.Filled.ArrowBackIosNew, "Back"),
+    BACK_ARROW(Icons.AutoMirrored.Filled.ArrowBack, "Back"),
     VIDEO_TITLE(Icons.Default.Info, "Video title"),
     CHAPTERS(Icons.Default.Bookmarks, "Chapters"),
     SPEED(Icons.Default.Speed, "Playback speed"),

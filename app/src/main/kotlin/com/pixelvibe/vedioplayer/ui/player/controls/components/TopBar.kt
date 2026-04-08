@@ -11,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.BasicMarquee
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -57,11 +56,11 @@ fun MarqueeTitle(
 ) {
     Text(
         text = title,
-        modifier = modifier.basicMarquee(),
+        modifier = modifier,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
         maxLines = 1,
-        overflow = TextOverflow.Visible
+        overflow = TextOverflow.Ellipsis
     )
 }
 
