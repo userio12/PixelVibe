@@ -1,14 +1,14 @@
-name: Android CI
+name: Android CI (Playback)
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ feature/mpv-playback ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'reference/**'
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ feature/mpv-playback ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -25,7 +25,7 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────
-  # Release APKs — ABI Splits (unsigned)
+  # Release APKs — ABI Splits (unsigned, with MPV)
   # ─────────────────────────────────────────────
   build-release:
     name: Release APK (${{ matrix.abi }})
