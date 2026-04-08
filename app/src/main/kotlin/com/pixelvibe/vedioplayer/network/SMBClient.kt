@@ -1,16 +1,18 @@
 package com.pixelvibe.vedioplayer.network
 
 import com.hierynomus.msdtyp.AccessMask
-import com.hierynomus.smbj.SMBClient
+import com.hierynomus.msfscc.FileAttributes
+import com.hierynomus.mssmbj.SMBClient
+import com.hierynomus.mssmbj.SMB2CreateDisposition
 import com.hierynomus.smbj.SmbConfig
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.connection.Connection
 import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
-import com.hierynomus.smbj.share.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 
 /**
@@ -83,7 +85,7 @@ class SMBClientWrapper(
                 SMBFileEntry(
                     name = info.fileName,
                     path = "$remotePath/${info.fileName}",
-                    isDirectory = info.fileAttributes.isDirectory,
+                    isDirectory = info.fileAttributes.any { it == FileAttributes.FILE_ATTRIBUTE_DIRECTORY },
                     size = info.endOfFile,
                     lastModified = info.lastWriteTime.toEpochMillis()
                 )
@@ -105,10 +107,10 @@ class SMBClientWrapper(
 
             val file = currentShare.openFile(
                 path,
-                java.util.EnumSet.of(AccessMask.GENERIC_READ),
+                EnumSet.of(AccessMask.GENERIC_READ),
+                EnumSet.noneOf(FileAttributes::class.java),
                 null,
-                null,
-                com.hierynomus.mssmbj.SMB2CreateDisposition.FILE_OPEN,
+                SMB2CreateDisposition.FILE_OPEN,
                 null
             )
 
@@ -121,11 +123,7 @@ class SMBClientWrapper(
     /**
      * Check if connected and authenticated.
      */
-    fun isConnected(): Boolean {
-        val connConnected = try { connection?.isConnected } catch (_: Exception) { false }
-        val sessionConnected = try { session?.isConnected } catch (_: Exception) { false }
-        return connConnected == true && sessionConnected == true
-    }
+    fun isConnected(): Boolean = connection != null && session != null && share != null
 
     /**
      * Disconnect from the SMB server.

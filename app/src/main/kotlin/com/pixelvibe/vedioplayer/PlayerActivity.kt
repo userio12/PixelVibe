@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.pixelvibe.vedioplayer.ui.player.PlayerControls
+import com.pixelvibe.vedioplayer.ui.player.controls.PlayerControls
 import com.pixelvibe.vedioplayer.ui.player.PlayerState
 import com.pixelvibe.vedioplayer.ui.theme.PixelVibeTheme
 

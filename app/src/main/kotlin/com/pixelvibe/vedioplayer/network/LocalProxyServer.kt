@@ -115,7 +115,7 @@ class LocalProxyServer(
     private suspend fun openNetworkStream(stream: NetworkStream): InputStream? = withContext(Dispatchers.IO) {
         when (val conn = stream.connection) {
             is NetworkConnection.SMB -> {
-                val smbClient = SMBClient(
+                val smbClient = SMBClientWrapper(
                     host = conn.host,
                     port = conn.port,
                     username = conn.username,

@@ -1,24 +1,27 @@
 package com.pixelvibe.vedioplayer.ui.player
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.ClosedCaption
 import androidx.compose.material.icons.filled.Flip
-import androidx.compose.material.icons.filled.Forward
+import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Loop
-import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.ZoomInMap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,11 +33,11 @@ enum class PlayerButtonType(
     val icon: ImageVector,
     val contentDescription: String
 ) {
-    BACK_ARROW(Icons.AutoMirrored.Filled.ArrowBack, "Back"),
+    BACK_ARROW(Icons.AutoMirrored.Filled.ArrowBackIosNew, "Back"),
     VIDEO_TITLE(Icons.Default.Info, "Video title"),
     CHAPTERS(Icons.Default.Bookmarks, "Chapters"),
     SPEED(Icons.Default.Speed, "Playback speed"),
-    DECODER(Icons.Default.Memory, "Decoder"),
+    DECODER(Icons.Default.Tune, "Decoder"),
     ROTATION(Icons.Default.ScreenRotation, "Rotation"),
     FRAME_NAV(Icons.Default.SkipNext, "Frame navigation"),
     ZOOM(Icons.Default.ZoomInMap, "Zoom"),
@@ -50,6 +53,6 @@ enum class PlayerButtonType(
     MIRROR(Icons.Default.Flip, "Mirror"),
     VERTICAL_FLIP(Icons.Default.Flip, "Vertical flip"),
     A_B_LOOP(Icons.Default.Loop, "A-B loop"),
-    CUSTOM_SKIP(Icons.Default.Forward, "Custom skip"),
+    CUSTOM_SKIP(Icons.Default.Forward10, "Custom skip"),
     BACKGROUND_PLAYBACK(Icons.Default.Headphones, "Background playback")
 }

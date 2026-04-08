@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BackgroundReplace
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -75,7 +75,7 @@ fun MoreSheet(
                     .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.BackgroundReplace, contentDescription = null)
+                Icon(Icons.Default.Headphones, contentDescription = null)
                 Text(
                     text = "Background playback",
                     modifier = Modifier

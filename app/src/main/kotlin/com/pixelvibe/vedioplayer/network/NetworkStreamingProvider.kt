@@ -82,7 +82,7 @@ class NetworkStreamingProvider : ContentProvider() {
                     val inputStream = when (connection) {
                         is LocalProxyServer.NetworkConnection.SMB -> {
                             runBlocking {
-                                val client = SMBClient(
+                                val client = SMBClientWrapper(
                                     host = connection.host,
                                     port = connection.port,
                                     username = connection.username,
