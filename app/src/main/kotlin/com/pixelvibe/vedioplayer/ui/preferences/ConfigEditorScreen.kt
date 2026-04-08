@@ -42,7 +42,7 @@ fun ConfigEditorScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (configType == ConfigType.MPV_CONF) "config.conf" else "keys.conf") },
+                title = { Text(if (configType == ConfigType.CONFIG) "config.conf" else "keys.conf") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } },
                 actions = {
                     IconButton(onClick = { onSave(content) }) {
