@@ -62,19 +62,12 @@ class MediaInfoActivity : ComponentActivity() {
                 filePath = metadata.filePath,
                 fileSize = metadata.fileSize,
                 duration = metadata.duration,
-                videoCodec = metadata.videoCodec,
                 videoWidth = metadata.videoWidth,
                 videoHeight = metadata.videoHeight,
                 videoFps = metadata.videoFps,
                 videoBitrate = metadata.videoBitrate,
-                videoPixelFmt = metadata.videoPixelFmt,
-                audioCodec = metadata.audioCodec,
-                audioChannels = metadata.audioChannels,
-                audioSampleRate = metadata.audioSampleRate,
-                audioBitrate = metadata.audioBitrate,
-                audioLanguage = metadata.audioLanguage,
                 containerFormat = metadata.containerFormat,
-                totalBitrate = metadata.videoBitrate + metadata.audioBitrate
+                totalBitrate = metadata.videoBitrate
             )
         } else {
             MediaInfo(

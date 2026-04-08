@@ -61,7 +61,6 @@ fun AppearancePreferencesScreen(
     val newLabelDays by preferences.newVideoLabelDays.collectAsState()
     val autoScroll by preferences.autoScroll.collectAsState()
     val watchedThreshold by preferences.watchedThreshold.collectAsState()
-    val hideButtonBg by preferences.hideButtonBackground.collectAsState()
     val fullNames by preferences.fullNames.collectAsState()
 
     Scaffold(
@@ -147,12 +146,6 @@ fun AppearancePreferencesScreen(
                 summary = "Don't truncate folder and video names",
                 checked = fullNames,
                 onCheckedChange = { /* preferences.fullNames.set(it) */ }
-            )
-
-            PrefSwitchRow(
-                title = "Hide button backgrounds",
-                checked = hideButtonBg,
-                onCheckedChange = { /* preferences.hideButtonBackground.set(it) */ }
             )
         }
     }

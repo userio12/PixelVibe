@@ -160,9 +160,6 @@ private fun RecentsTabContent(
     dao: com.pixelvibe.vedioplayer.database.dao.RecentlyPlayedDao,
     onVideoClick: (String) -> Unit
 ) {
-    val recentItems by androidx.compose.runtime.livedata.observeAsState<List<com.pixelvibe.vedioplayer.database.entities.RecentlyPlayedEntity>>()
-    // In production, use collectAsState() from Flow
-    // For now, placeholder - the Flow-based collection would be done via ViewModel
     RecentlyPlayedScreen(
         items = emptyList(),
         onVideoClick = onVideoClick,

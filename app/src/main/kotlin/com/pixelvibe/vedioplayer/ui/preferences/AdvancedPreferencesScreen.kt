@@ -131,59 +131,6 @@ fun AdvancedPreferencesScreen(
 }
 
 @Composable
-fun FoldersPreferencesScreen(
-    preferences: PlayerPreferences,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val viewMode by preferences.folderViewMode.collectAsState()
-    val showHidden by preferences.showHiddenFiles.collectAsState()
-
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("Folders") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            Text("View mode", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
-            Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                listOf("tree" to "Tree", "flat" to "Flat").forEach { (value, label) ->
-                    androidx.compose.material3.FilterChip(
-                        selected = viewMode == value,
-                        onClick = { /* preferences.folderViewMode.set(value) */ },
-                        label = { Text(label) }
-                    )
-                }
-            }
-
-            androidx.compose.foundation.layout.Spacer(Modifier.padding(8.dp))
-            PrefSwitchRow("Show hidden files", "Show files and folders starting with '.'", showHidden) { /* preferences.showHiddenFiles.set(it) */ }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                    Text("Scan directories", style = MaterialTheme.typography.bodyLarge)
-                    Text("Choose folders to scan for media files", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                TextButton(onClick = { /* Open directory picker */ }) { Text("Choose") }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ClearCacheRow(title: String, summary: String, onClear: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
