@@ -38,7 +38,10 @@ object PermissionUtils {
      * Get all permissions needed for the app.
      */
     fun getAllPermissions(): Array<String> {
-        return (getStoragePermissions() + getNotificationPermissions()).toTypedArray()
+        val perms = mutableListOf<String>()
+        perms.addAll(getStoragePermissions().toList())
+        perms.addAll(getNotificationPermissions().toList())
+        return perms.toTypedArray()
     }
 
     /**

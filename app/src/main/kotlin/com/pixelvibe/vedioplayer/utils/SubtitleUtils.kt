@@ -48,7 +48,7 @@ object SubtitleUtils {
         val trimmed = content.trimStart()
         return when {
             trimmed.startsWith("WEBVTT") -> SubtitleFormat.VTT
-            trimmed.startsWith("[Script Info]") && trimmed.contains("ScriptType.*ASS", RegexOption.DOT_MATCHES_ALL) -> SubtitleFormat.ASS
+            trimmed.startsWith("[Script Info]") && trimmed.contains(Regex("ScriptType.*ASS")) -> SubtitleFormat.ASS
             trimmed.startsWith("[Script Info]") -> SubtitleFormat.SSA
             trimmed.startsWith("<smil") || trimmed.startsWith("<SAMI") -> SubtitleFormat.SAMI
             trimmed.startsWith("<?xml") && trimmed.contains("ttml", ignoreCase = true) -> SubtitleFormat.TTML
@@ -66,7 +66,7 @@ object SubtitleUtils {
         if (extFormat != SubtitleFormat.UNKNOWN) return extFormat
 
         return try {
-            val content = file.inputStream().bufferedReader().use { it.readText(4096) }
+            val content = file.inputStream().bufferedReader().use { it.readText() }.take(4096)
             detectFormatFromContent(content)
         } catch (e: Exception) {
             SubtitleFormat.UNKNOWN
@@ -78,7 +78,7 @@ object SubtitleUtils {
      */
     fun detectFormat(inputStream: InputStream): SubtitleFormat {
         return try {
-            val content = inputStream.bufferedReader().use { it.readText(4096) }
+            val content = inputStream.bufferedReader().use { it.readText() }.take(4096)
             detectFormatFromContent(content)
         } catch (e: Exception) {
             SubtitleFormat.UNKNOWN

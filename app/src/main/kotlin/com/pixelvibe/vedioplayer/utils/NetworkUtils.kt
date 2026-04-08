@@ -66,9 +66,7 @@ object NetworkUtils {
             connectivityManager.isActiveNetworkMetered
         } else {
             @Suppress("DEPRECATION")
-            ConnectivityManager.isNetworkTypeMobile(
-                connectivityManager.activeNetworkInfo?.type ?: ConnectivityManager.TYPE_WIFI
-            )
+            connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_MOBILE
         }
     }
 
