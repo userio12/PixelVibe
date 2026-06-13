@@ -35,7 +35,7 @@ fun VideoGrid(
                     durationText = video.durationMs.formatMillis(),
                     thumbnailUri = video.uri
                 ),
-                onClick = { onVideoClick(video.uri) }
+                onClick = { onVideoClick(video.id) }
             )
         }
     }

@@ -140,6 +140,7 @@ class PlayerViewModel(
     }
 
     fun startPlayback(videoUri: String) {
+        _state.value = _state.value.copy(error = null)
         viewModelScope.launch {
             val resolved = if (videoUri.startsWith("content://") || videoUri.startsWith("http") ||
                 videoUri.startsWith("/")
