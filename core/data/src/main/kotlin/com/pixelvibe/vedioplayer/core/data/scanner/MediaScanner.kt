@@ -10,8 +10,6 @@ import com.pixelvibe.vedioplayer.core.common.result.EmptyResult
 import com.pixelvibe.vedioplayer.core.common.result.Result
 import com.pixelvibe.vedioplayer.core.data.db.dao.VideoDao
 import com.pixelvibe.vedioplayer.core.data.db.entity.VideoEntity
-import java.io.File
-
 class MediaScanner(
     private val context: Context,
     private val videoDao: VideoDao
@@ -83,10 +81,9 @@ class MediaScanner(
                 if (mimeType == null || mimeType !in SUPPORTED_MIME_TYPES) continue
 
                 val filePath = cursor.getString(dataCol) ?: continue
-                if (!File(filePath).exists()) continue
 
                 val id = cursor.getLong(idCol)
-                val title = cursor.getString(titleCol) ?: File(filePath).name
+                val title = cursor.getString(titleCol) ?: filePath.substringAfterLast('/').ifEmpty { "Unknown" }
                 val size = cursor.getLong(sizeCol)
                 val duration = cursor.getLong(durCol)
                 val added = cursor.getLong(addedCol)
@@ -95,6 +92,7 @@ class MediaScanner(
                 videos.add(
                     ScannedVideo(
                         id = "media_$id",
+                        mediaStoreId = id,
                         title = title,
                         uri = filePath,
                         filePath = filePath,
@@ -112,6 +110,7 @@ class MediaScanner(
 
     private data class ScannedVideo(
         val id: String,
+        val mediaStoreId: Long,
         val title: String,
         val uri: String,
         val filePath: String,
@@ -123,15 +122,19 @@ class MediaScanner(
     )
 
     private fun ScannedVideo.toVideoEntity(): VideoEntity {
+        val contentUri = Uri.withAppendedPath(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            mediaStoreId.toString()
+        ).toString()
         return VideoEntity(
             id = id,
             title = title,
-            uri = Uri.fromFile(File(filePath)).toString(),
+            uri = contentUri,
             filePath = filePath,
             mimeType = mimeType,
             durationMs = durationMs,
             fileSize = fileSize,
-            folderName = File(filePath).parentFile?.name,
+            folderName = filePath.substringBeforeLast('/').substringAfterLast('/').ifEmpty { null },
             addedAt = addedAt,
             modifiedAt = modifiedAt
         )

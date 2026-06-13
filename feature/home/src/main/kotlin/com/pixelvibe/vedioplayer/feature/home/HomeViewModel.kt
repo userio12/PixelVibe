@@ -7,8 +7,11 @@ import com.pixelvibe.vedioplayer.core.data.db.dao.PlaylistDao
 import com.pixelvibe.vedioplayer.core.common.util.UiText
 import com.pixelvibe.vedioplayer.core.data.db.entity.PlaylistEntity
 import com.pixelvibe.vedioplayer.core.data.db.entity.PlaylistVideoEntity
+import com.pixelvibe.vedioplayer.core.common.result.DataError
+import com.pixelvibe.vedioplayer.core.common.result.Result
 import com.pixelvibe.vedioplayer.core.data.db.entity.VideoEntity
 import com.pixelvibe.vedioplayer.core.data.repository.VideoRepository
+import com.pixelvibe.vedioplayer.core.data.scanner.MediaScanner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -31,6 +35,7 @@ data class HomeState(
     val searchQuery: String = "",
     val isLoading: Boolean = true,
     val error: UiText? = null,
+    val needsPermission: Boolean = false,
     val showCreatePlaylistDialog: Boolean = false
 )
 
@@ -40,6 +45,7 @@ sealed interface HomeAction {
     data class OnFolderSelected(val folder: String) : HomeAction
     data class OnVideoClick(val videoId: String) : HomeAction
     data object OnRetryClick : HomeAction
+    data object OnPermissionGranted : HomeAction
     data object OnShowCreatePlaylist : HomeAction
     data object OnDismissCreatePlaylist : HomeAction
     data class OnCreatePlaylist(val name: String) : HomeAction
@@ -54,7 +60,8 @@ sealed interface HomeEvent {
 class HomeViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val videoRepository: VideoRepository,
-    private val playlistDao: PlaylistDao
+    private val playlistDao: PlaylistDao,
+    private val mediaScanner: MediaScanner
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -78,6 +85,44 @@ class HomeViewModel(
         observeVideos()
         observeFolders()
         persistState()
+        triggerInitialScan()
+    }
+
+    private fun triggerInitialScan() {
+        viewModelScope.launch {
+            val snapshot = videoRepository.getAllVideos().first()
+            if (snapshot.isEmpty()) {
+                _state.update { it.copy(isLoading = true) }
+                performScan()
+            } else {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    private fun onPermissionGranted() {
+        _state.update { it.copy(isLoading = true, needsPermission = false) }
+        viewModelScope.launch { performScan() }
+    }
+
+    private suspend fun performScan() {
+        when (val result = mediaScanner.scanVideos()) {
+            is Result.Success -> {
+                _state.update { it.copy(isLoading = false, needsPermission = false, error = null) }
+            }
+            is Result.Error -> {
+                _state.update { it.copy(isLoading = false) }
+                when (result.error) {
+                    DataError.Local.PERMISSION_DENIED -> {
+                        _state.update { it.copy(needsPermission = true) }
+                    }
+                    DataError.Local.UNKNOWN -> {
+                        _state.update { it.copy(error = UiText.DynamicString("Failed to scan videos")) }
+                    }
+                    else -> {}
+                }
+            }
+        }
     }
 
     private fun persistState() {
@@ -96,6 +141,7 @@ class HomeViewModel(
             is HomeAction.OnFolderSelected -> onFolderSelected(action.folder)
             is HomeAction.OnVideoClick -> onVideoClick(action.videoId)
             is HomeAction.OnRetryClick -> onRetryClick()
+            is HomeAction.OnPermissionGranted -> onPermissionGranted()
             is HomeAction.OnShowCreatePlaylist -> onShowCreatePlaylist()
             is HomeAction.OnDismissCreatePlaylist -> onDismissCreatePlaylist()
             is HomeAction.OnCreatePlaylist -> onCreatePlaylist(action.name)
@@ -110,7 +156,6 @@ class HomeViewModel(
                 _state.update {
                     it.copy(
                         videos = videos,
-                        isLoading = false,
                         error = null
                     )
                 }
@@ -159,8 +204,8 @@ class HomeViewModel(
     }
 
     private fun onRetryClick() {
-        _state.update { it.copy(isLoading = true, error = null) }
-        observeVideos()
+        _state.update { it.copy(isLoading = true, error = null, needsPermission = false) }
+        viewModelScope.launch { performScan() }
     }
 
     private fun onShowCreatePlaylist() {
