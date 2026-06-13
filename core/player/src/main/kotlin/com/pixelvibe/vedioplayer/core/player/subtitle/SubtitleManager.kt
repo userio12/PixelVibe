@@ -40,9 +40,9 @@ class SubtitleManager {
             } catch (_: Exception) { null }
         } ?: return
         val cues = if (uri.endsWith(".vtt", ignoreCase = true) ||
-            content.trimStart().startsWith("WEBVTT")
-        ) SubtitleParser.parseVtt(content)
-        else SubtitleParser.parseSrt(content)
+            text.trimStart().startsWith("WEBVTT")
+        ) SubtitleParser.parseVtt(text)
+        else SubtitleParser.parseSrt(text)
         subtitles.add(SubtitleEntry(uri, name, language, cues))
         val currentTracks = _state.value.tracks
         _state.value = _state.value.copy(
