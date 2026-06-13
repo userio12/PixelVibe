@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import com.pixelvibe.vedioplayer.core.data.db.dao.HistoryDao
 import com.pixelvibe.vedioplayer.core.data.db.entity.HistoryEntity
+import com.pixelvibe.vedioplayer.core.data.repository.VideoRepository
 import com.pixelvibe.vedioplayer.core.data.security.IncognitoManager
 import com.pixelvibe.vedioplayer.core.player.audio.AudioEffectManager
 import com.pixelvibe.vedioplayer.core.player.audio.AudioEffectState
@@ -109,6 +110,7 @@ class PlayerViewModel(
     private val subtitleStylePrefs: SubtitleStylePreferences,
     private val subtitleSearchClient: SubtitleSearchClient,
     private val historyDao: HistoryDao,
+    private val videoRepository: VideoRepository,
     private val incognitoManager: IncognitoManager,
     private val context: Context? = null
 ) : ViewModel() {
@@ -138,15 +140,24 @@ class PlayerViewModel(
     }
 
     fun startPlayback(videoUri: String) {
-        currentVideoId = videoUri
-        currentVideoTitle = videoUri.substringAfterLast('/').substringBeforeLast('?')
-            .ifEmpty { videoUri }
-        playerController.play(videoUri)
-        val savedSpeed = savedStateHandle.get<Float>("playbackSpeed")
-        if (savedSpeed != null) {
-            playerController.setSpeed(savedSpeed)
+        viewModelScope.launch {
+            val resolved = if (videoUri.startsWith("content://") || videoUri.startsWith("http") ||
+                videoUri.startsWith("/")
+            ) {
+                videoUri
+            } else {
+                videoRepository.getVideoById(videoUri)?.uri ?: videoUri
+            }
+            currentVideoId = resolved
+            currentVideoTitle = resolved.substringAfterLast('/').substringBeforeLast('?')
+                .ifEmpty { resolved }
+            playerController.play(resolved)
+            val savedSpeed = savedStateHandle.get<Float>("playbackSpeed")
+            if (savedSpeed != null) {
+                playerController.setSpeed(savedSpeed)
+            }
+            checkResumePosition(resolved)
         }
-        checkResumePosition(videoUri)
         observePlaybackState()
         observeAudioEffects()
         observeSubtitles()

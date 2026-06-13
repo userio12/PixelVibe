@@ -8,7 +8,10 @@ import assertk.assertions.isTrue
 import androidx.lifecycle.SavedStateHandle
 import androidx.media3.common.Player
 import com.pixelvibe.vedioplayer.core.data.db.dao.HistoryDao
+import com.pixelvibe.vedioplayer.core.data.db.dao.VideoDao
 import com.pixelvibe.vedioplayer.core.data.db.entity.HistoryEntity
+import com.pixelvibe.vedioplayer.core.data.db.entity.VideoEntity
+import com.pixelvibe.vedioplayer.core.data.repository.VideoRepository
 import com.pixelvibe.vedioplayer.core.data.security.IncognitoManager
 import com.pixelvibe.vedioplayer.core.player.audio.AudioEffectManager
 import com.pixelvibe.vedioplayer.core.player.controller.PlayerController
@@ -88,6 +91,21 @@ private class FakeSubtitleSearchClient : SubtitleSearchClient {
 private class FakeIncognitoManager : IncognitoManager(null!!) {
     override val isIncognito: Flow<Boolean> = MutableStateFlow(false)
     override suspend fun setIncognito(enabled: Boolean) {}
+}
+
+private class FakeVideoDao : VideoDao {
+    override fun getAllVideos(): Flow<List<VideoEntity>> = flowOf(emptyList())
+    override fun getVideosByFolder(folder: String): Flow<List<VideoEntity>> = flowOf(emptyList())
+    override fun getFavoriteVideos(): Flow<List<VideoEntity>> = flowOf(emptyList())
+    override suspend fun getVideoById(id: String): VideoEntity? = null
+    override fun searchVideos(query: String): Flow<List<VideoEntity>> = flowOf(emptyList())
+    override fun getAllFolders(): Flow<List<String>> = flowOf(emptyList())
+    override suspend fun insertAll(videos: List<VideoEntity>) {}
+    override suspend fun update(video: VideoEntity) {}
+    override suspend fun updateResumePosition(id: String, position: Long) {}
+    override suspend fun updateFavorite(id: String, favorite: Boolean) {}
+    override suspend fun deleteById(id: String) {}
+    override suspend fun deleteAll() {}
 }
 
 private class FakeHistoryDaoImpl : HistoryDao {
@@ -204,6 +222,7 @@ class PlayerViewModelTest {
             subtitleStylePrefs = FakeSubtitleStylePreferences(),
             subtitleSearchClient = FakeSubtitleSearchClient(),
             historyDao = FakeHistoryDaoImpl(),
+            videoRepository = VideoRepository(FakeVideoDao()),
             incognitoManager = FakeIncognitoManager(),
             context = null
         )
