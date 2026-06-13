@@ -71,6 +71,16 @@ class SubtitleManager {
         _state.value = current.copy(isEnabled = !current.isEnabled)
     }
 
+    fun updatePosition(positionMs: Long) {
+        val s = _state.value
+        val adjustedMs = positionMs - s.delayMs
+        val cues = subtitles.getOrNull(s.selectedTrackIndex)?.cues ?: emptyList()
+        val active = cues.find { adjustedMs in it.startMs until it.endMs }
+        if (_state.value.currentText != active?.text) {
+            _state.value = s.copy(currentText = active?.text)
+        }
+    }
+
     private data class SubtitleEntry(
         val uri: String,
         val name: String,

@@ -13,8 +13,10 @@ open class IncognitoManager(private val context: Context) {
 
     private val INCOGNITO_KEY = booleanPreferencesKey("incognito_mode")
 
-    open val isIncognito: Flow<Boolean> = context.incognitoPrefs.data.map { prefs ->
-        prefs[INCOGNITO_KEY] ?: false
+    open val isIncognito: Flow<Boolean> by lazy {
+        context.incognitoPrefs.data.map { prefs ->
+            prefs[INCOGNITO_KEY] ?: false
+        }
     }
 
     open suspend fun setIncognito(enabled: Boolean) {

@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.exoplayer.ffmpeg)
     api(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.koin.android)

@@ -30,9 +30,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Loop
@@ -58,9 +58,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -150,8 +150,12 @@ fun PlayerRoot(
 @Composable
 private fun KeepScreenOn() {
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        (context as? ComponentActivity)?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    DisposableEffect(Unit) {
+        val window = (context as? ComponentActivity)?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 }
 
@@ -454,8 +458,8 @@ private fun BottomControlsRow(state: PlayerState, onAction: (PlayerAction) -> Un
         IconButton(onClick = { onAction(PlayerAction.OnToggleSubtitleStyle) }) {
             Icon(Icons.Default.Flag, contentDescription = "Subtitles", tint = Color.White, modifier = Modifier.size(20.dp))
         }
-        IconButton(onClick = { Toast.makeText(context, "Cast not available", Toast.LENGTH_SHORT).show() }) {
-            Icon(Icons.Default.Cast, contentDescription = "Cast", tint = Color.White, modifier = Modifier.size(20.dp))
+        IconButton(onClick = { onAction(PlayerAction.OnEnterPipMode) }) {
+            Icon(Icons.Default.PictureInPicture, contentDescription = "PiP", tint = Color.White, modifier = Modifier.size(20.dp))
         }
         if (state.sleepTimer.isActive) {
             Button(

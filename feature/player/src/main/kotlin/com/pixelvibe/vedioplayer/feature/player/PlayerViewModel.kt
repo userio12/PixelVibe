@@ -92,6 +92,7 @@ sealed interface PlayerAction {
     data class OnSubtitleSearchQuery(val query: String) : PlayerAction
     data class OnDownloadSubtitle(val result: SubtitleSearchResult) : PlayerAction
     data object OnRetry : PlayerAction
+    data object OnEnterPipMode : PlayerAction
 }
 
 sealed interface PlayerEvent {
@@ -125,16 +126,45 @@ class PlayerViewModel(
     private var currentVideoId: String = ""
     private var currentVideoTitle: String = ""
 
+    init {
+        savedStateHandle.get<Float>("playbackSpeed")?.let { speed ->
+            _state.value = _state.value.copy(playbackSpeed = speed)
+        }
+        savedStateHandle.get<Long>("repeatStart")?.let { start ->
+            savedStateHandle.get<Long>("repeatEnd")?.let { end ->
+                _state.value = _state.value.copy(repeatPoint = RepeatPoint(start, end))
+            }
+        }
+    }
+
     fun startPlayback(videoUri: String) {
         currentVideoId = videoUri
         currentVideoTitle = videoUri.substringAfterLast('/').substringBeforeLast('?')
             .ifEmpty { videoUri }
         playerController.play(videoUri)
+        val savedSpeed = savedStateHandle.get<Float>("playbackSpeed")
+        if (savedSpeed != null) {
+            playerController.setSpeed(savedSpeed)
+        }
         checkResumePosition(videoUri)
         observePlaybackState()
         observeAudioEffects()
         observeSubtitles()
         observeSubtitleStyle()
+        persistState()
+    }
+
+    private fun persistState() {
+        viewModelScope.launch {
+            _state.collect { s ->
+                savedStateHandle["playbackSpeed"] = s.playbackSpeed
+                savedStateHandle["repeatStart"] = s.repeatPoint.startMs
+                savedStateHandle["repeatEnd"] = s.repeatPoint.endMs
+                if (s.currentPositionMs > 0) {
+                    savedStateHandle["currentPositionMs"] = s.currentPositionMs
+                }
+            }
+        }
     }
 
     private fun checkResumePosition(videoUri: String) {
@@ -263,6 +293,9 @@ class PlayerViewModel(
                     startPlayback(currentVideoId)
                 }
             }
+            PlayerAction.OnEnterPipMode -> {
+                (context as? android.app.Activity)?.let { pipHandler.enterPipMode(it) }
+            }
         }
     }
 
@@ -279,6 +312,9 @@ class PlayerViewModel(
                     error = playbackState.error,
                     isFinished = playbackState.isFinished
                 )
+                if (playbackState.isPlaying) {
+                    updateSubtitlePosition(playbackState.currentPositionMs)
+                }
                 val state = _state.value
                 if (state.isFinished || (!playbackState.isPlaying && wasPlaying)) {
                     saveToHistory(state.currentPositionMs, state.durationMs)
@@ -315,6 +351,10 @@ class PlayerViewModel(
                 )
             }
         }
+    }
+
+    private fun updateSubtitlePosition(positionMs: Long) {
+        subtitleManager.updatePosition(positionMs)
     }
 
     private fun startLoopCheck() {

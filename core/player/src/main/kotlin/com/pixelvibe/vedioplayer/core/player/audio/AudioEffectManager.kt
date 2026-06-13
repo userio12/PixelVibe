@@ -81,6 +81,8 @@ class AudioEffectManager(private val context: Context) {
 
     suspend fun init(sessionId: Int) = withContext(Dispatchers.IO) {
         audioSessionId = sessionId
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        audioManager?.registerAudioDeviceCallback(audioDeviceCallback, null)
         try {
             equalizer?.release()
             equalizer = Equalizer(0, sessionId).apply {
@@ -166,6 +168,8 @@ class AudioEffectManager(private val context: Context) {
     }
 
     fun release() {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        audioManager?.unregisterAudioDeviceCallback(audioDeviceCallback)
         equalizer?.release()
         bassBoost?.release()
         virtualizer?.release()

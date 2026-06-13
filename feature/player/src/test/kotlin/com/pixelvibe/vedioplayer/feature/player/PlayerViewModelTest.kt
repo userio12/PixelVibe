@@ -83,7 +83,11 @@ private class FakeSubtitleStylePreferences : SubtitleStylePreferences(null!!) {
 
 private class FakeSubtitleSearchClient : SubtitleSearchClient {
     override suspend fun search(query: String): List<SubtitleSearchResult> = emptyList()
-    override suspend fun download(fileId: Int): ByteArray? = null
+}
+
+private class FakeIncognitoManager : IncognitoManager(null!!) {
+    override val isIncognito: Flow<Boolean> = MutableStateFlow(false)
+    override suspend fun setIncognito(enabled: Boolean) {}
 }
 
 private class FakeHistoryDaoImpl : HistoryDao {
@@ -200,7 +204,7 @@ class PlayerViewModelTest {
             subtitleStylePrefs = FakeSubtitleStylePreferences(),
             subtitleSearchClient = FakeSubtitleSearchClient(),
             historyDao = FakeHistoryDaoImpl(),
-            incognitoManager = null!!,
+            incognitoManager = FakeIncognitoManager(),
             context = null
         )
     }

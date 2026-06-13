@@ -109,7 +109,7 @@ class SubtitleSearchClient(
                     id = attrs.optString("subtitle_id", item.optString("id", "")),
                     name = title,
                     language = attrs.optString("language", ""),
-                    downloadUrl = if (fileId.isNotBlank()) "https://api.opensubtitles.com/api/v1/download" else "",
+                    downloadUrl = if (fileId.isNotBlank()) "https://api.opensubtitles.com/api/v1/download?file_id=$fileId" else "",
                     format = attrs.optString("subtitle_format", "srt"),
                     rating = attrs.optDouble("ratings", 0.0).toFloat()
                 )
