@@ -11,7 +11,6 @@
 | Layer | Choice | Version |
 |---|---|---|
 | Player engine | Media3 (ExoPlayer) | 1.9.3 |
-| FFmpeg fallback | media3-exoplayer-ffmpeg | 1.9.3 |
 | UI | Jetpack Compose + Material 3 | BOM 2025.10.01 |
 | Architecture | MVI (State/Action/Event) | — |
 | DI | Koin | 4.0.2 |
