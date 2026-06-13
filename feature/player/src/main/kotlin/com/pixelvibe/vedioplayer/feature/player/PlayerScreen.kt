@@ -542,7 +542,7 @@ private fun EqualizerSheet(
                         Text(freqText, color = Color.Gray, fontSize = 10.sp, modifier = Modifier.width(48.dp))
                         Slider(
                             value = bandLevel.toFloat(),
-                            onValueChange = { onSetBand(index, it.toShort()) },
+                            onValueChange = { onSetBand(index, it.toInt().toShort()) },
                             valueRange = state.bandLevelRange.start.toFloat()..state.bandLevelRange.endInclusive.toFloat(),
                             modifier = Modifier.weight(1f),
                             colors = MaterialSliderDefaults.colors(thumbColor = Color.White, activeTrackColor = Color(0xFF4CAF50), inactiveTrackColor = Color(0x33FFFFFF))
@@ -554,14 +554,14 @@ private fun EqualizerSheet(
                 Spacer(Modifier.height(12.dp))
                 Text("Bass Boost", color = Color.White, style = MaterialTheme.typography.bodySmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Slider(value = state.bassBoostLevel.toFloat(), onValueChange = { onSetBassBoost(it.toShort()) }, valueRange = 0f..1000f, modifier = Modifier.weight(1f))
+                    Slider(value = state.bassBoostLevel.toFloat(), onValueChange = { onSetBassBoost(it.toInt().toShort()) }, valueRange = 0f..1000f, modifier = Modifier.weight(1f))
                     Text("${state.bassBoostLevel / 10}%", color = Color.White, fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
                 }
 
                 Spacer(Modifier.height(8.dp))
                 Text("Virtualizer", color = Color.White, style = MaterialTheme.typography.bodySmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Slider(value = state.virtualizerStrength.toFloat(), onValueChange = { onSetVirtualizer(it.toShort()) }, valueRange = 0f..1000f, modifier = Modifier.weight(1f))
+                    Slider(value = state.virtualizerStrength.toFloat(), onValueChange = { onSetVirtualizer(it.toInt().toShort()) }, valueRange = 0f..1000f, modifier = Modifier.weight(1f))
                     Text("${state.virtualizerStrength / 10}%", color = Color.White, fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
                 }
 
