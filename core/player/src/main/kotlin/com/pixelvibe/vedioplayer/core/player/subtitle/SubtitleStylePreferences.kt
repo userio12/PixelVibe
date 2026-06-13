@@ -33,18 +33,20 @@ open class SubtitleStylePreferences(private val context: Context) {
     private val POSITION = stringPreferencesKey("position")
     private val IS_BILINGUAL = stringPreferencesKey("is_bilingual")
 
-    open val style: Flow<SubtitleStyle> = context.subtitlePrefs.data.map { prefs ->
-        SubtitleStyle(
-            fontSize = prefs[FONT_SIZE] ?: 18,
-            fontColor = prefs[FONT_COLOR] ?: "#FFFFFF",
-            outlineColor = prefs[OUTLINE_COLOR] ?: "#000000",
-            outlineWidth = prefs[OUTLINE_WIDTH] ?: 1f,
-            backgroundColor = prefs[BACKGROUND_COLOR] ?: "#80000000",
-            position = try {
-                SubtitlePosition.valueOf(prefs[POSITION] ?: "BOTTOM")
-            } catch (_: Exception) { SubtitlePosition.BOTTOM },
-            isBilingual = prefs[IS_BILINGUAL]?.toBooleanStrictOrNull() ?: false
-        )
+    open val style: Flow<SubtitleStyle> by lazy {
+        context.subtitlePrefs.data.map { prefs ->
+            SubtitleStyle(
+                fontSize = prefs[FONT_SIZE] ?: 18,
+                fontColor = prefs[FONT_COLOR] ?: "#FFFFFF",
+                outlineColor = prefs[OUTLINE_COLOR] ?: "#000000",
+                outlineWidth = prefs[OUTLINE_WIDTH] ?: 1f,
+                backgroundColor = prefs[BACKGROUND_COLOR] ?: "#80000000",
+                position = try {
+                    SubtitlePosition.valueOf(prefs[POSITION] ?: "BOTTOM")
+                } catch (_: Exception) { SubtitlePosition.BOTTOM },
+                isBilingual = prefs[IS_BILINGUAL]?.toBooleanStrictOrNull() ?: false
+            )
+        }
     }
 
     open suspend fun updateStyle(style: SubtitleStyle) {

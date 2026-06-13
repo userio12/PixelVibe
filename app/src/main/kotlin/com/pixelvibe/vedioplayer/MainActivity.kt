@@ -24,12 +24,17 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.pixelvibe.vedioplayer.core.player.pip.PipHandler
 import com.pixelvibe.vedioplayer.core.ui.theme.PixelVibeTheme
 import com.pixelvibe.vedioplayer.navigation.PixelVibeNavGraph
 import com.pixelvibe.vedioplayer.navigation.Screen
 import com.pixelvibe.vedioplayer.core.data.security.AppLockManager
 import com.pixelvibe.vedioplayer.security.AppLockGate
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.compose.koinInject
+import org.koin.java.KoinJavaComponent.get as koinGet
+
+private val isPlayerActive = MutableStateFlow(false)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +42,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PixelVibeTheme {
-                                val appLockManager = koinInject<AppLockManager>()
+                val appLockManager = koinInject<AppLockManager>()
                 AppLockGate(
                     appLockManager = appLockManager,
                     onUnlocked = { }
@@ -47,6 +52,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (isPlayerActive.value) {
+            val pipHandler = koinGet<PipHandler>(PipHandler::class.java)
+            pipHandler.enterPipMode(this)
+        }
+    }
 }
 
 @Composable
@@ -54,6 +67,9 @@ fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val onPlayer = currentDestination?.route == "player/{videoId}"
+
+    isPlayerActive.value = onPlayer
 
     val bottomNavItems = listOf(
         BottomNavItem("Home", Icons.Filled.Home, Screen.Home),

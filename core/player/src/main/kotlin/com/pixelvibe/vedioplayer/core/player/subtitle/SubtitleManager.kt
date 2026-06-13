@@ -32,8 +32,8 @@ class SubtitleManager {
 
     private val subtitles = mutableListOf<SubtitleEntry>()
 
-    suspend fun addExternalSubtitle(uri: String, name: String, language: String?) {
-        val content = withContext(Dispatchers.IO) {
+    suspend fun addExternalSubtitle(uri: String, name: String, language: String?, content: ByteArray? = null) {
+        val text = content?.toString(Charsets.UTF_8) ?: withContext(Dispatchers.IO) {
             try {
                 if (uri.startsWith("http")) URL(uri).readText()
                 else File(URI.create(uri)).readText()

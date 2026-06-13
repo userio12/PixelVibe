@@ -44,6 +44,42 @@ class SubtitleSearchClient(
         }
     }
 
+    suspend fun downloadSubtitle(result: SubtitleSearchResult): ByteArray? {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (apiKey.isNotBlank() && result.downloadUrl.contains("opensubtitles.com")) {
+                    downloadV2(result.downloadUrl)
+                } else if (result.downloadUrl.isNotBlank()) {
+                    downloadDirect(result.downloadUrl)
+                } else null
+            } catch (_: Exception) { null }
+        }
+    }
+
+    private fun downloadV2(downloadUrl: String): ByteArray? {
+        val fileId = downloadUrl.substringAfter("file_id=").substringBefore("&")
+        if (fileId.isBlank()) return null
+        val json = """{"file_id": $fileId}"""
+        val request = Request.Builder()
+            .url("https://api.opensubtitles.com/api/v1/download")
+            .addHeader("Api-Key", apiKey)
+            .addHeader("User-Agent", "PixelVibe v1.0")
+            .addHeader("Content-Type", "application/json")
+            .post(json.toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        val body = response.body?.string() ?: return null
+        val link = JSONObject(body).optString("link", "")
+        if (link.isBlank()) return null
+        val fileRequest = Request.Builder().url(link).build()
+        return client.newCall(fileRequest).execute().body?.bytes()
+    }
+
+    private fun downloadDirect(downloadUrl: String): ByteArray? {
+        val request = Request.Builder().url(downloadUrl).build()
+        return client.newCall(request).execute().body?.bytes()
+    }
+
     suspend fun searchByHash(
         fileHash: String,
         movieBytesize: Long,

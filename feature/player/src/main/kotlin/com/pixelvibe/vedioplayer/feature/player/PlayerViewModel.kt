@@ -276,11 +276,15 @@ class PlayerViewModel(
             is PlayerAction.OnDownloadSubtitle -> {
                 viewModelScope.launch {
                     _state.value = _state.value.copy(isSearchingSubtitles = true)
-                    subtitleManager.addExternalSubtitle(
-                        uri = action.result.downloadUrl,
-                        name = action.result.name,
-                        language = action.result.language
-                    )
+                    val data = subtitleSearchClient.downloadSubtitle(action.result)
+                    if (data != null) {
+                        subtitleManager.addExternalSubtitle(
+                            uri = action.result.downloadUrl,
+                            name = action.result.name,
+                            language = action.result.language,
+                            content = data
+                        )
+                    }
                     _state.value = _state.value.copy(
                         isSearchingSubtitles = false,
                         showSubtitleSearch = false
