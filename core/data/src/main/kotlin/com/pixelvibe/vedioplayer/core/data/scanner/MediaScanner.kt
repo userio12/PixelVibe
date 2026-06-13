@@ -1,6 +1,8 @@
 package com.pixelvibe.vedioplayer.core.data.scanner
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -31,6 +33,13 @@ class MediaScanner(
     }
 
     fun scanVideos(): EmptyResult<DataError.Local> {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            Manifest.permission.READ_MEDIA_VIDEO
+        else
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        if (context.checkCallingOrSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+            return Result.Error(DataError.Local.PERMISSION_DENIED)
+        }
         return try {
             val videos = queryMediaStore()
             val videoEntities = videos.map { it.toVideoEntity() }
