@@ -24,26 +24,28 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-private class FakeVideoRepository : VideoRepository {
+private class FakeVideoRepository(videoDao: VideoDao? = null) : VideoRepository(videoDao!!) {
     private val _videos = MutableStateFlow<List<VideoEntity>>(emptyList())
     override fun getAllVideos(): Flow<List<VideoEntity>> = _videos
     override fun getFolders(): Flow<List<String>> = flowOf(emptyList())
-    override suspend fun refresh() {}
-    override suspend fun getById(id: String): VideoEntity? = null
-    override suspend fun toggleFavorite(id: String) {}
-    override suspend fun updateLastPlayed(id: String, position: Long) {}
+    override fun searchVideos(query: String): Flow<List<VideoEntity>> = _videos
+    override fun getVideosByFolder(folder: String): Flow<List<VideoEntity>> = _videos
+    override fun getFavoriteVideos(): Flow<List<VideoEntity>> = flowOf(emptyList())
+    override suspend fun getVideoById(id: String): VideoEntity? = null
+    override suspend fun toggleFavorite(id: String, favorite: Boolean) {}
+    override suspend fun updateResumePosition(id: String, positionMs: Long) {}
+    override suspend fun insertVideos(videos: List<VideoEntity>) = com.pixelvibe.vedioplayer.core.common.result.Result.Success(Unit)
 }
 
 private class FakePlaylistDao : PlaylistDao {
     private val _playlists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
     private val _videos = mutableListOf<PlaylistVideoEntity>()
     override fun getAllPlaylists(): Flow<List<PlaylistEntity>> = _playlists
-    override fun getVideosForPlaylist(playlistId: String): Flow<List<PlaylistVideoEntity>> = flowOf(_videos.filter { it.playlistId == playlistId })
+    override fun getPlaylistVideoIds(playlistId: String): Flow<List<String>> = flowOf(_videos.filter { it.playlistId == playlistId }.map { it.videoId })
     override suspend fun insertPlaylist(playlist: PlaylistEntity) { _playlists.value = _playlists.value + playlist }
-    override suspend fun deletePlaylist(playlistId: String) { _playlists.value = _playlists.value.filter { it.id != playlistId } }
+    override suspend fun deletePlaylist(id: String) { _playlists.value = _playlists.value.filter { it.id != id } }
     override suspend fun addVideoToPlaylist(entry: PlaylistVideoEntity) { _videos.add(entry) }
     override suspend fun removeVideoFromPlaylist(playlistId: String, videoId: String) { _videos.removeAll { it.playlistId == playlistId && it.videoId == videoId } }
-    override suspend fun isVideoInPlaylist(playlistId: String, videoId: String): Boolean = _videos.any { it.playlistId == playlistId && it.videoId == videoId }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -104,7 +106,16 @@ class HomeViewModelTest {
         return HomeViewModel(
             savedStateHandle = SavedStateHandle(),
             videoRepository = FakeVideoRepository(),
-            playlistDao = FakePlaylistDao()
+            playlistDao = FakePlaylistDao(),
+            mediaScanner = mockMediaScanner()
         )
+    }
+
+    private fun mockMediaScanner(): com.pixelvibe.vedioplayer.core.data.scanner.MediaScanner {
+        return object : com.pixelvibe.vedioplayer.core.data.scanner.MediaScanner(null!!) {
+            override suspend fun scanVideos(): com.pixelvibe.vedioplayer.core.common.result.EmptyResult<com.pixelvibe.vedioplayer.core.common.result.DataError.Local> {
+                return com.pixelvibe.vedioplayer.core.common.result.Result.Success(Unit)
+            }
+        }
     }
 }

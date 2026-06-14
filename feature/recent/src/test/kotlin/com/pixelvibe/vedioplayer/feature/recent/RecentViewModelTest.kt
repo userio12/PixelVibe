@@ -1,5 +1,6 @@
 package com.pixelvibe.vedioplayer.feature.recent
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -45,7 +46,7 @@ class RecentViewModelTest {
     @Test
     fun `initial state loads history and becomes not loading`() {
         val dao = FakeHistoryDao()
-        val vm = RecentViewModel(historyDao = dao)
+        val vm = RecentViewModel(SavedStateHandle(), dao)
         assertThat(vm.state.value.isLoading).isFalse()
         assertThat(vm.state.value.history).isEqualTo(emptyList())
     }
@@ -53,7 +54,7 @@ class RecentViewModelTest {
     @Test
     fun `history click emits player event`() = runTest(testDispatcher) {
         val dao = FakeHistoryDao()
-        val vm = RecentViewModel(historyDao = dao)
+        val vm = RecentViewModel(SavedStateHandle(), dao)
         vm.events.test {
             vm.onAction(RecentAction.OnHistoryClick("video-1"))
             val event = awaitItem()

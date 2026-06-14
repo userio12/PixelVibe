@@ -6,13 +6,12 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import kotlinx.coroutines.runBlocking
 import com.pixelvibe.vedioplayer.core.common.result.DataError
 import com.pixelvibe.vedioplayer.core.common.result.EmptyResult
 import com.pixelvibe.vedioplayer.core.common.result.Result
 import com.pixelvibe.vedioplayer.core.data.db.dao.VideoDao
 import com.pixelvibe.vedioplayer.core.data.db.entity.VideoEntity
-class MediaScanner(
+open class MediaScanner(
     private val context: Context,
     private val videoDao: VideoDao
 ) {
@@ -32,7 +31,7 @@ class MediaScanner(
         )
     }
 
-    fun scanVideos(): EmptyResult<DataError.Local> {
+    open suspend fun scanVideos(): EmptyResult<DataError.Local> {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             Manifest.permission.READ_MEDIA_VIDEO
         else
@@ -43,7 +42,7 @@ class MediaScanner(
         return try {
             val videos = queryMediaStore()
             val videoEntities = videos.map { it.toVideoEntity() }
-            runBlocking { videoDao.insertAll(videoEntities) }
+            videoDao.insertAll(videoEntities)
             Result.Success(Unit)
         } catch (e: SecurityException) {
             Result.Error(DataError.Local.PERMISSION_DENIED)

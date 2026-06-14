@@ -13,6 +13,7 @@ import com.pixelvibe.vedioplayer.core.data.network.SsdpDevice
 import com.pixelvibe.vedioplayer.core.data.network.SsdpDiscovery
 import com.pixelvibe.vedioplayer.core.data.network.Breadcrumb
 import com.pixelvibe.vedioplayer.core.data.network.WebDavClient
+import com.pixelvibe.vedioplayer.core.data.network.toPlaybackUri
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -311,7 +312,7 @@ class NetworkViewModel(
 
     private fun playVideo(file: NetworkFile) {
         viewModelScope.launch {
-            _events.emit(NetworkEvent.PlayVideo(file.path))
+            _events.emit(NetworkEvent.PlayVideo(file.toPlaybackUri()))
         }
     }
 

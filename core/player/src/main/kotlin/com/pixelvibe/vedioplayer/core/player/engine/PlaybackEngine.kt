@@ -1,15 +1,19 @@
 package com.pixelvibe.vedioplayer.core.player.engine
 
 import android.content.Context
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +30,10 @@ data class PlaybackState(
     val isFinished: Boolean = false
 )
 
-class PlaybackEngine(private val context: Context) {
+open class PlaybackEngine(
+    private val context: Context,
+    private val dataSourceFactory: DataSource.Factory? = null
+) {
 
     private val _state = MutableStateFlow(PlaybackState())
     open val state: StateFlow<PlaybackState> = _state.asStateFlow()
@@ -34,10 +41,20 @@ class PlaybackEngine(private val context: Context) {
     open val audioSessionId: Int get() = player.audioSessionId
     open val playerRef: Player get() = player
 
-    private val player: ExoPlayer by lazy {
-        ExoPlayer.Builder(context)
-            .build()
-            .apply {
+    private var isReleased = false
+    private var player: ExoPlayer? = null
+
+    private var positionUpdateJob: Job? = null
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    private fun ensurePlayer(): ExoPlayer {
+        val existing = player
+        if (existing != null && !isReleased) return existing
+        val builder = ExoPlayer.Builder(context)
+        if (dataSourceFactory != null) {
+            builder.setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+        }
+        val newPlayer = builder.build().apply {
                 addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _state.value = _state.value.copy(isPlaying = isPlaying)
@@ -55,62 +72,86 @@ class PlaybackEngine(private val context: Context) {
                     }
                 })
             }
+        player = newPlayer
+        isReleased = false
+        return newPlayer
     }
 
-    private var positionUpdateJob: Job? = null
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
     open fun play(uri: String) {
-        val mediaItem = MediaItem.fromUri(uri)
-        player.setMediaItem(mediaItem)
-        player.prepare()
-        player.play()
-        startPositionUpdates()
+        _state.value = _state.value.copy(error = null)
+        ensurePlayer().let { p ->
+            val mediaItem = MediaItem.fromUri(uri)
+            p.setMediaItem(mediaItem)
+            p.prepare()
+            p.play()
+            startPositionUpdates()
+        }
     }
 
     open fun play(mediaItems: List<String>, startIndex: Int = 0) {
-        val items = mediaItems.map { MediaItem.fromUri(it) }
-        player.setMediaItems(items, startIndex, 0)
-        player.prepare()
-        player.play()
-        startPositionUpdates()
+        _state.value = _state.value.copy(error = null)
+        ensurePlayer().let { p ->
+            val items = mediaItems.map { MediaItem.fromUri(it) }
+            p.setMediaItems(items, startIndex, 0)
+            p.prepare()
+            p.play()
+            startPositionUpdates()
+        }
     }
 
     open fun togglePlay() {
-        if (player.isPlaying) player.pause() else player.play()
+        ensurePlayer().let { p ->
+            if (p.isPlaying) p.pause() else p.play()
+        }
     }
 
     open fun seekTo(positionMs: Long) {
-        player.seekTo(positionMs)
+        ensurePlayer().seekTo(positionMs)
     }
 
     open fun setSpeed(speed: Float) {
-        player.playbackParameters = PlaybackParameters(speed)
+        ensurePlayer().playbackParameters = PlaybackParameters(speed)
         _state.value = _state.value.copy(playbackSpeed = speed)
     }
 
     open fun setVolume(volume: Float) {
-        player.volume = volume.coerceIn(0f, 1f)
+        ensurePlayer().volume = volume.coerceIn(0f, 1f)
     }
 
     open fun stepForward() {
-        val fps = player.videoFormat?.frameRate ?: 60f
+        val p = ensurePlayer()
+        val pos = p.currentPosition
+        if (pos == C.TIME_UNSET) return
+        val fps = p.videoFormat?.frameRate ?: 60f
         val stepMs = (1000f / fps).toLong().coerceAtLeast(1)
-        player.seekTo(player.currentPosition + stepMs)
+        p.seekTo(pos + stepMs)
     }
 
     open fun stepBackward() {
-        val fps = player.videoFormat?.frameRate ?: 60f
+        val p = ensurePlayer()
+        val pos = p.currentPosition
+        if (pos == C.TIME_UNSET) return
+        val fps = p.videoFormat?.frameRate ?: 60f
         val stepMs = (1000f / fps).toLong().coerceAtLeast(1)
-        player.seekTo(maxOf(0, player.currentPosition - stepMs))
+        p.seekTo(maxOf(0, pos - stepMs))
     }
 
-    open val currentPosition: Long get() = player.currentPosition
-    open val duration: Long get() = if (player.duration > 0) player.duration else 0
+    open val currentPosition: Long get() {
+        val pos = player?.currentPosition ?: return 0
+        return if (pos == C.TIME_UNSET) 0 else pos
+    }
+
+    open val duration: Long get() {
+        val dur = player?.duration ?: return 0
+        return if (dur > 0 && dur != C.TIME_UNSET) dur else 0
+    }
 
     open fun release() {
+        isReleased = true
         positionUpdateJob?.cancel()
-        player.release()
+        scope.cancel()
+        player?.release()
+        player = null
     }
 
     private fun startPositionUpdates() {
@@ -120,8 +161,12 @@ class PlaybackEngine(private val context: Context) {
                 delay(250)
                 try {
                     _state.value = _state.value.copy(
-                        currentPositionMs = player.currentPosition,
-                        durationMs = if (player.duration > 0) player.duration else 0
+                        currentPositionMs = player?.currentPosition?.let {
+                            if (it == C.TIME_UNSET) 0 else it
+                        } ?: 0,
+                        durationMs = player?.duration?.let {
+                            if (it > 0 && it != C.TIME_UNSET) it else 0
+                        } ?: 0
                     )
                 } catch (_: Exception) {
                     break

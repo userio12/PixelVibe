@@ -102,13 +102,16 @@ class SettingsViewModel(
             val incognito = incognitoManager.isIncognito.first()
             val style = subtitleStylePrefs.style.first()
             val amoled = themePreferences.isAmoledTheme.first()
+            val appLock = appLockManager.isPinSet()
             val json = backupManager.exportBackup(
+                appLockEnabled = appLock,
                 incognitoMode = incognito,
                 amoledTheme = amoled,
                 subtitleFontSize = style.fontSize,
                 subtitleFontColor = style.fontColor
             )
             val file = backupManager.saveBackupToFile(data = BackupData(
+                appLockEnabled = appLock,
                 incognitoMode = incognito,
                 amoledTheme = amoled,
                 subtitleFontSize = style.fontSize,

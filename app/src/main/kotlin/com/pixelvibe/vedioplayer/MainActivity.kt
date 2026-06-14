@@ -18,17 +18,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.hasRoute
+import com.pixelvibe.vedioplayer.core.common.route.Route
+import com.pixelvibe.vedioplayer.core.data.security.AppLockManager
+import com.pixelvibe.vedioplayer.core.data.security.ThemePreferences
 import com.pixelvibe.vedioplayer.core.player.pip.PipHandler
 import com.pixelvibe.vedioplayer.core.ui.theme.PixelVibeTheme
 import com.pixelvibe.vedioplayer.navigation.PixelVibeNavGraph
-import com.pixelvibe.vedioplayer.navigation.Screen
-import com.pixelvibe.vedioplayer.core.data.security.AppLockManager
 import com.pixelvibe.vedioplayer.security.AppLockGate
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.compose.koinInject
@@ -41,7 +44,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PixelVibeTheme {
+            val themePrefs = koinInject<ThemePreferences>()
+            val amoled by themePrefs.isAmoledTheme.collectAsStateWithLifecycle(false)
+            PixelVibeTheme(amoledTheme = amoled) {
                 val appLockManager = koinInject<AppLockManager>()
                 AppLockGate(
                     appLockManager = appLockManager,
@@ -67,28 +72,34 @@ fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val onPlayer = currentDestination?.route == "player/{videoId}"
 
+    val onPlayer = currentDestination?.hasRoute<Route.Player>() ?: false
     isPlayerActive.value = onPlayer
 
     val bottomNavItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Home, Screen.Home),
-        BottomNavItem("Recent", Icons.Filled.History, Screen.Recent),
-        BottomNavItem("Network", Icons.Filled.Folder, Screen.Network),
-        BottomNavItem("Settings", Icons.Filled.Settings, Screen.Settings)
+        BottomNavItem("Home", Icons.Filled.Home, Route.Home),
+        BottomNavItem("Recent", Icons.Filled.History, Route.Recent),
+        BottomNavItem("Network", Icons.Filled.Folder, Route.Network),
+        BottomNavItem("Settings", Icons.Filled.Settings, Route.Settings)
     )
-
-    val playerRoutes = setOf("player/{videoId}")
 
     Scaffold(
         bottomBar = {
-            if (currentDestination?.route !in playerRoutes) {
+            if (!onPlayer) {
                 NavigationBar {
                     bottomNavItems.forEach { item ->
                         NavigationBarItem(
-                            selected = currentDestination?.hierarchy?.any { it.route == item.screen.route } == true,
+                            selected = currentDestination?.hierarchy?.any { dest ->
+                                when (item.route) {
+                                    is Route.Home -> dest.hasRoute<Route.Home>()
+                                    is Route.Recent -> dest.hasRoute<Route.Recent>()
+                                    is Route.Network -> dest.hasRoute<Route.Network>()
+                                    is Route.Settings -> dest.hasRoute<Route.Settings>()
+                                    else -> false
+                                }
+                            } == true,
                             onClick = {
-                                navController.navigate(item.screen.route) {
+                                navController.navigate(item.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
                                     }
@@ -116,5 +127,5 @@ fun MainScreen() {
 private data class BottomNavItem(
     val label: String,
     val icon: ImageVector,
-    val screen: Screen
+    val route: Route
 )

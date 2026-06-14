@@ -6,6 +6,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -73,7 +74,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -85,6 +85,7 @@ import com.pixelvibe.vedioplayer.core.player.subtitle.SubtitleStyle
 import com.pixelvibe.vedioplayer.core.common.util.UiText
 import com.pixelvibe.vedioplayer.core.ui.component.ErrorView
 import com.pixelvibe.vedioplayer.core.ui.component.LoadingIndicator
+import com.pixelvibe.vedioplayer.core.ui.component.ObserveAsEvents
 import com.pixelvibe.vedioplayer.core.ui.theme.WindowSize
 import com.pixelvibe.vedioplayer.core.ui.theme.rememberWindowSize
 import org.koin.androidx.compose.koinViewModel
@@ -104,9 +105,10 @@ fun PlayerRoot(
         viewModel.startPlayback(videoId)
     }
 
-    LaunchedEffect(state.isFinished) {
-        if (state.isFinished) {
-            onBackPress()
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is PlayerEvent.OnSleepTimerExpired -> viewModel.onAction(PlayerAction.OnTogglePlay)
+            is PlayerEvent.OnBackPress -> onBackPress()
         }
     }
 
@@ -269,28 +271,41 @@ private fun GestureLayer(onAction: (PlayerAction) -> Unit) {
             .pointerInput(Unit) {
                 val isLeftSide = { x: Float -> x < size.width / 3f }
                 val isRightSide = { x: Float -> x > size.width * 2f / 3f }
+                var dragAxis: String? = null
                 detectVerticalDragGestures(
+                    onDragStart = { offset ->
+                        dragAxis = null
+                    },
                     onVerticalDrag = { change, dragAmount ->
-                        change.consume()
                         val x = change.position.x
-                        if (isLeftSide(x)) {
-                            audioManager?.let { am ->
-                                val current = am.getStreamVolume(AudioManager.STREAM_MUSIC)
-                                val step = if (dragAmount < 0) 1 else -1
-                                am.setStreamVolume(
-                                    AudioManager.STREAM_MUSIC,
-                                    (current + step).coerceIn(0, maxVolume),
-                                    AudioManager.FLAG_SHOW_UI
-                                )
+                        if (isLeftSide(x) || isRightSide(x)) {
+                            if (dragAxis == null) {
+                                dragAxis = "vertical"
                             }
-                        } else if (isRightSide(x)) {
-                            val window = (context as? ComponentActivity)?.window ?: return@detectVerticalDragGestures
-                            val attrs = window.attributes
-                            val brightness = (attrs.screenBrightness ?: 1f) - dragAmount / 1000f
-                            attrs.screenBrightness = brightness.coerceIn(0.01f, 1f)
-                            window.attributes = attrs
+                            if (dragAxis == "vertical") {
+                                change.consume()
+                                if (isLeftSide(x)) {
+                                    audioManager?.let { am ->
+                                        val current = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                        val step = if (dragAmount < 0) 1 else -1
+                                        am.setStreamVolume(
+                                            AudioManager.STREAM_MUSIC,
+                                            (current + step).coerceIn(0, maxVolume),
+                                            AudioManager.FLAG_SHOW_UI
+                                        )
+                                    }
+                                } else {
+                                    val window = (context as? ComponentActivity)?.window ?: return@detectVerticalDragGestures
+                                    val attrs = window.attributes
+                                    val brightness = (attrs.screenBrightness ?: 1f) - dragAmount / 1000f
+                                    attrs.screenBrightness = brightness.coerceIn(0.01f, 1f)
+                                    window.attributes = attrs
+                                }
+                            }
                         }
-                    }
+                    },
+                    onDragEnd = { dragAxis = null },
+                    onDragCancel = { dragAxis = null }
                 )
             }
     )
@@ -459,7 +474,7 @@ private fun BottomControlsRow(state: PlayerState, onAction: (PlayerAction) -> Un
         IconButton(onClick = { onAction(PlayerAction.OnToggleSubtitleStyle) }) {
             Icon(Icons.Default.Flag, contentDescription = "Subtitles", tint = Color.White, modifier = Modifier.size(20.dp))
         }
-        IconButton(onClick = { onAction(PlayerAction.OnEnterPipMode) }) {
+        IconButton(onClick = { onAction(PlayerAction.OnEnterPipMode(context as android.app.Activity)) }) {
             Icon(Icons.Default.PictureInPicture, contentDescription = "PiP", tint = Color.White, modifier = Modifier.size(20.dp))
         }
         if (state.sleepTimer.isActive) {

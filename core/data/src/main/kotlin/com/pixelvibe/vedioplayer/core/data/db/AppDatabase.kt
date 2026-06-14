@@ -13,7 +13,7 @@ import com.pixelvibe.vedioplayer.core.data.db.entity.VideoEntity
 @Database(
     entities = [VideoEntity::class, PlaylistEntity::class, PlaylistVideoEntity::class, HistoryEntity::class],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun videoDao(): VideoDao

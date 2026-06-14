@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.coil.compose)
+    implementation(libs.coil.video)
     implementation(libs.koin.compose)
 
     debugImplementation(libs.androidx.ui.tooling)

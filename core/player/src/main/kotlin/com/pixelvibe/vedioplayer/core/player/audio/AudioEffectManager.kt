@@ -41,7 +41,7 @@ enum class EqualizerPreset(val label: String, val levels: List<Short>? = null) {
     ROCK("Rock", listOf(6, 4, 2, -2, -4, -4, -2, 2, 4, 6))
 }
 
-class AudioEffectManager(private val context: Context) {
+open class AudioEffectManager(private val context: Context) {
 
     private val _state = MutableStateFlow(AudioEffectState())
     val state: StateFlow<AudioEffectState> = _state.asStateFlow()

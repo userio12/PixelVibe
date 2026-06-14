@@ -1,5 +1,6 @@
 package com.pixelvibe.vedioplayer.feature.player
 
+import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
@@ -93,7 +94,7 @@ sealed interface PlayerAction {
     data class OnSubtitleSearchQuery(val query: String) : PlayerAction
     data class OnDownloadSubtitle(val result: SubtitleSearchResult) : PlayerAction
     data object OnRetry : PlayerAction
-    data object OnEnterPipMode : PlayerAction
+    class OnEnterPipMode(val activity: android.app.Activity) : PlayerAction
 }
 
 sealed interface PlayerEvent {
@@ -114,6 +115,8 @@ class PlayerViewModel(
     private val incognitoManager: IncognitoManager,
     private val context: Context? = null
 ) : ViewModel() {
+    private val notificationManager: NotificationManager?
+        get() = context?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
 
     val player: Player get() = playerController.player
 
@@ -137,21 +140,32 @@ class PlayerViewModel(
                 _state.value = _state.value.copy(repeatPoint = RepeatPoint(start, end))
             }
         }
+        observePlaybackState()
+        observeAudioEffects()
+        observeSubtitles()
+        observeSubtitleStyle()
+        persistState()
     }
 
     fun startPlayback(videoUri: String) {
         _state.value = _state.value.copy(error = null)
         viewModelScope.launch {
-            val resolved = if (videoUri.startsWith("content://") || videoUri.startsWith("http") ||
-                videoUri.startsWith("/")
-            ) {
-                videoUri
+            val isDirectUri = videoUri.startsWith("content://") || videoUri.startsWith("http") ||
+                videoUri.startsWith("/") || videoUri.startsWith("smb://") ||
+                videoUri.startsWith("ftp://") || videoUri.startsWith("webdav://")
+            val resolved: String
+            val entityTitle: String?
+            if (isDirectUri) {
+                resolved = videoUri
+                entityTitle = null
             } else {
-                videoRepository.getVideoById(videoUri)?.uri ?: videoUri
+                val entity = videoRepository.getVideoById(videoUri)
+                resolved = entity?.uri ?: videoUri
+                entityTitle = entity?.title
             }
             currentVideoId = resolved
-            currentVideoTitle = resolved.substringAfterLast('/').substringBeforeLast('?')
-                .ifEmpty { resolved }
+            currentVideoTitle = entityTitle
+                ?: resolved.substringAfterLast('/').substringBeforeLast('?').ifEmpty { resolved }
             playerController.play(resolved)
             val savedSpeed = savedStateHandle.get<Float>("playbackSpeed")
             if (savedSpeed != null) {
@@ -159,11 +173,6 @@ class PlayerViewModel(
             }
             checkResumePosition(resolved)
         }
-        observePlaybackState()
-        observeAudioEffects()
-        observeSubtitles()
-        observeSubtitleStyle()
-        persistState()
     }
 
     private fun persistState() {
@@ -172,10 +181,13 @@ class PlayerViewModel(
                 savedStateHandle["playbackSpeed"] = s.playbackSpeed
                 savedStateHandle["repeatStart"] = s.repeatPoint.startMs
                 savedStateHandle["repeatEnd"] = s.repeatPoint.endMs
-                if (s.currentPositionMs > 0) {
-                    savedStateHandle["currentPositionMs"] = s.currentPositionMs
-                }
             }
+        }
+    }
+
+    private fun savePersistentPosition(positionMs: Long) {
+        if (positionMs > 0) {
+            savedStateHandle["currentPositionMs"] = positionMs
         }
     }
 
@@ -309,8 +321,8 @@ class PlayerViewModel(
                     startPlayback(currentVideoId)
                 }
             }
-            PlayerAction.OnEnterPipMode -> {
-                (context as? android.app.Activity)?.let { pipHandler.enterPipMode(it) }
+            is PlayerAction.OnEnterPipMode -> {
+                pipHandler.enterPipMode(action.activity)
             }
         }
     }
@@ -334,6 +346,7 @@ class PlayerViewModel(
                 val state = _state.value
                 if (state.isFinished || (!playbackState.isPlaying && wasPlaying)) {
                     saveToHistory(state.currentPositionMs, state.durationMs)
+                    savePersistentPosition(state.currentPositionMs)
                 }
                 wasPlaying = playbackState.isPlaying
             }
@@ -379,8 +392,11 @@ class PlayerViewModel(
             while (true) {
                 delay(100)
                 val s = _state.value
-                if (s.isLooping && s.repeatPoint.endMs >= 0 && s.currentPositionMs >= s.repeatPoint.endMs) {
-                    playerController.seekTo(s.repeatPoint.startMs)
+                if (s.isLooping && s.repeatPoint.endMs >= 0) {
+                    val pos = playerController.currentPosition
+                    if (pos >= s.repeatPoint.endMs) {
+                        playerController.seekTo(s.repeatPoint.startMs)
+                    }
                 }
             }
         }
@@ -401,8 +417,7 @@ class PlayerViewModel(
                     playerController.togglePlay()
                     _events.tryEmit(PlayerEvent.OnSleepTimerExpired)
                     _state.value = _state.value.copy(sleepTimer = SleepTimerState())
-                    (context?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)
-                        ?.cancel(1001)
+                    notificationManager?.cancel(1001)
                 }
                 delay(1000)
             }
@@ -430,6 +445,7 @@ class PlayerViewModel(
         super.onCleared()
         sleepTimerJob?.cancel()
         loopCheckJob?.cancel()
+        savePersistentPosition(_state.value.currentPositionMs)
         audioEffectManager.release()
         playerController.release()
     }

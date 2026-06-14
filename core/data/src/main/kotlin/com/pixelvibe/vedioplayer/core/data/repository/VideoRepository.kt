@@ -8,7 +8,7 @@ import com.pixelvibe.vedioplayer.core.data.db.dao.VideoDao
 import com.pixelvibe.vedioplayer.core.data.db.entity.VideoEntity
 import kotlinx.coroutines.flow.Flow
 
-class VideoRepository(private val videoDao: VideoDao) {
+open class VideoRepository(private val videoDao: VideoDao) {
 
     fun getAllVideos(): Flow<List<VideoEntity>> = videoDao.getAllVideos()
 

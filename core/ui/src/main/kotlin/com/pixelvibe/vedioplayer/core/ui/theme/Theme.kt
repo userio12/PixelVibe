@@ -8,12 +8,24 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80
+)
+
+private val AmoledDarkColorScheme = darkColorScheme(
+    primary = Purple80,
+    secondary = PurpleGrey80,
+    tertiary = Pink80,
+    background = AmoledBlack,
+    surface = AmoledSurface,
+    surfaceVariant = AmoledCard,
+    surfaceContainerHigh = AmoledCard,
+    surfaceContainer = AmoledCard
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -26,6 +38,7 @@ private val LightColorScheme = lightColorScheme(
 fun PixelVibeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoledTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -33,6 +46,7 @@ fun PixelVibeTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+        darkTheme && amoledTheme -> AmoledDarkColorScheme
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

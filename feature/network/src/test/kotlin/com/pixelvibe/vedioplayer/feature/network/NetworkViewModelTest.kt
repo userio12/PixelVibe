@@ -188,11 +188,12 @@ class NetworkViewModelTest {
     @Test
     fun `video click emits play event`() = runTest(testDispatcher) {
         val vm = createViewModel()
-        val file = NetworkFile("video.mp4", "/path/video.mp4", false, source = NetworkSource.Smb("", ""))
+        val source = NetworkSource.Smb("TestServer", "192.168.1.100", share = "videos", username = "user", password = "pass")
+        val file = NetworkFile("video.mp4", "smb://192.168.1.100/videos/video.mp4", false, source = source)
         vm.events.test {
             vm.onAction(NetworkAction.OnVideoClick(file))
             val event = awaitItem()
-            assertThat(event).isEqualTo(NetworkEvent.PlayVideo("/path/video.mp4"))
+            assertThat(event).isEqualTo(NetworkEvent.PlayVideo("smb://user:pass@192.168.1.100/videos/video.mp4"))
         }
     }
 

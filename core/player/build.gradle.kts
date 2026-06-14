@@ -22,6 +22,7 @@ android {
 
 dependencies {
     implementation(project(":core:common"))
+    implementation(project(":core:data"))
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)
@@ -31,6 +32,8 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.okhttp)
+    implementation(libs.jcifs.ng)
+    implementation(libs.commons.net)
     implementation(libs.androidx.datastore.preferences)
 
     testImplementation(libs.kotlinx.coroutines.test)

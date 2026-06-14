@@ -39,7 +39,7 @@ open class SsdpDiscovery {
         try {
             NetworkInterface.getNetworkInterfaces()?.iterator()?.forEach { netif ->
                 try {
-                    socket.joinGroup(InetSocketAddress(ssdpAddr, 0), netif)
+                    socket.joinGroup(InetSocketAddress(ssdpAddr, ssdpPort), netif)
                 } catch (_: Exception) {}
             }
 
@@ -62,7 +62,7 @@ open class SsdpDiscovery {
         } finally {
             try {
                 NetworkInterface.getNetworkInterfaces()?.iterator()?.forEach { netif ->
-                    try { socket.leaveGroup(InetSocketAddress(ssdpAddr, 0), netif) } catch (_: Exception) {}
+                    try { socket.leaveGroup(InetSocketAddress(ssdpAddr, ssdpPort), netif) } catch (_: Exception) {}
                 }
             } catch (_: Exception) {}
             socket.close()

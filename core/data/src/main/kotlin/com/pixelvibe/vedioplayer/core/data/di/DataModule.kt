@@ -23,7 +23,7 @@ val dataModule = module {
             androidContext(),
             AppDatabase::class.java,
             "pixelvibe.db"
-        ).fallbackToDestructiveMigration().build()
+        ).fallbackToDestructiveMigrationOnDowngrade().build()
     }
 
     single { get<AppDatabase>().videoDao() }

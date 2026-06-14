@@ -40,6 +40,7 @@ import com.pixelvibe.vedioplayer.core.data.network.SsdpDevice
 import com.pixelvibe.vedioplayer.core.ui.component.EmptyView
 import com.pixelvibe.vedioplayer.core.ui.component.ErrorView
 import com.pixelvibe.vedioplayer.core.ui.component.LoadingIndicator
+import com.pixelvibe.vedioplayer.core.ui.component.ObserveAsEvents
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -48,6 +49,12 @@ fun NetworkRoot(
     viewModel: NetworkViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is NetworkEvent.PlayVideo -> onVideoClick(event.uri)
+        }
+    }
 
     NetworkScreen(
         state = state,

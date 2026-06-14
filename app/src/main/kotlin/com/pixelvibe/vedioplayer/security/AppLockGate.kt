@@ -14,10 +14,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,13 +34,18 @@ fun AppLockGate(
     onUnlocked: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val state = appLockManager.state.value
+    val state by appLockManager.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        if (state == AppLockState.UNINITIALIZED && appLockManager.isPinSet()) {
+            appLockManager.lock()
+        }
+    }
 
     when (state) {
         AppLockState.UNLOCKED -> content()
         AppLockState.UNINITIALIZED -> {
             if (appLockManager.isPinSet()) {
-                appLockManager.lock()
                 PinEntryScreen(
                     mode = PinMode.UNLOCK,
                     onPinVerified = { onUnlocked() },

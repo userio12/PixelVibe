@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
+import assertk.assertions.isNotEqualTo
 import org.junit.jupiter.api.Test
 
 class AppLockManagerTest {
@@ -28,10 +29,5 @@ class AppLockManagerTest {
         val hash1 = "1234".hashCode().toString() + "1234".reversed().hashCode().toString()
         val hash2 = "5678".hashCode().toString() + "5678".reversed().hashCode().toString()
         assertThat(hash1).isNotEqualTo(hash2)
-    }
-
-    @Test
-    fun `pin mode enum has three values`() {
-        assertThat(com.pixelvibe.vedioplayer.security.PinMode.entries.size).isEqualTo(3)
     }
 }

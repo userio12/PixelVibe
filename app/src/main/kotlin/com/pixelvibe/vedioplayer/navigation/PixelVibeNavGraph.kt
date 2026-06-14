@@ -1,5 +1,6 @@
 package com.pixelvibe.vedioplayer.navigation
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -7,10 +8,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
+import com.pixelvibe.vedioplayer.core.common.route.Route
 import com.pixelvibe.vedioplayer.feature.home.HomeRoot
 import com.pixelvibe.vedioplayer.feature.network.NetworkRoot
 import com.pixelvibe.vedioplayer.feature.player.PlayerRoot
@@ -24,38 +25,36 @@ fun PixelVibeNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
+        startDestination = Route.Home,
         modifier = modifier,
         enterTransition = { fadeIn(animationSpec = tween(300)) },
         exitTransition = { fadeOut(animationSpec = tween(300)) }
     ) {
-        composable(Screen.Home.route) {
+        composable<Route.Home> {
             HomeRoot(
                 onVideoClick = { videoId ->
-                    navController.navigate(Screen.Player.createRoute(videoId))
+                    navController.navigate(Route.Player.createRoute(videoId))
                 }
             )
         }
-        composable(Screen.Recent.route) {
+        composable<Route.Recent> {
             RecentRoot(
                 onVideoClick = { videoId ->
-                    navController.navigate(Screen.Player.createRoute(videoId))
+                    navController.navigate(Route.Player.createRoute(videoId))
                 }
             )
         }
-        composable(Screen.Network.route) {
+        composable<Route.Network> {
             NetworkRoot(
                 onVideoClick = { uri ->
-                    navController.navigate(Screen.Player.createRoute(uri))
+                    navController.navigate(Route.Player.createRoute(uri))
                 }
             )
         }
-        composable(Screen.Settings.route) {
+        composable<Route.Settings> {
             SettingsScreen()
         }
-        composable(
-            route = "player/{videoId}",
-            arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
+        composable<Route.Player>(
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
@@ -69,9 +68,9 @@ fun PixelVibeNavGraph(
                 )
             }
         ) { backStackEntry ->
-            val videoId = backStackEntry.arguments?.getString("videoId") ?: return@composable
+            val route: Route.Player = backStackEntry.toRoute()
             PlayerRoot(
-                videoId = videoId,
+                videoId = Uri.decode(route.videoId),
                 onBackPress = { navController.popBackStack() }
             )
         }

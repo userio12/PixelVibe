@@ -1,5 +1,6 @@
 package com.pixelvibe.vedioplayer.core.data.network
 
+import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Credentials
@@ -19,7 +20,9 @@ open class WebDavClient {
     private var credentials: String? = null
 
     open suspend fun listFiles(source: NetworkSource.WebDav): List<NetworkFile> = withContext(Dispatchers.IO) {
-        val url = "${source.baseUrl}/${source.path}".replace("//", "/").replace(":/", "://")
+        val base = source.baseUrl.trimEnd('/')
+        val path = source.path.trimStart('/')
+        val url = "$base/$path"
         credentials = if (source.username.isNotEmpty()) {
             Credentials.basic(source.username, source.password)
         } else null
@@ -62,7 +65,9 @@ open class WebDavClient {
                     XmlPullParser.END_TAG -> {
                         if (parser.name == "response" && insideResponse) {
                             if (currentHref.isNotEmpty()) {
-                                val path = currentHref.removePrefix(source.baseUrl).trim('/')
+                                val hrefPath = Uri.parse(currentHref).path ?: currentHref
+                                val basePath = Uri.parse(source.baseUrl).path ?: ""
+                                val path = hrefPath.removePrefix(basePath).trim('/')
                                 val name = currentName.ifEmpty { path.split("/").last().ifEmpty { path } }
                                 files.add(NetworkFile(
                                     name = name,
@@ -88,10 +93,11 @@ open class WebDavClient {
 
     open suspend fun authenticate(source: NetworkSource.WebDav): Boolean = withContext(Dispatchers.IO) {
         try {
-            credentials = Credentials.basic(source.username, source.password)
+            val creds = Credentials.basic(source.username, source.password)
+            credentials = creds
             val request = Request.Builder()
                 .url(source.baseUrl)
-                .header("Authorization", credentials!!)
+                .header("Authorization", creds)
                 .method("PROPFIND", null)
                 .header("Depth", "0")
                 .build()

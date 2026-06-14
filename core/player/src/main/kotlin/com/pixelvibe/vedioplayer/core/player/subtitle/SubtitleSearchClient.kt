@@ -19,7 +19,7 @@ data class SubtitleSearchResult(
     val rating: Float
 )
 
-class SubtitleSearchClient(
+open class SubtitleSearchClient(
     private val apiKey: String = ""
 ) {
 
