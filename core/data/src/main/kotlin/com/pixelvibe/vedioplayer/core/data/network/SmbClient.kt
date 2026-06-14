@@ -1,7 +1,6 @@
 package com.pixelvibe.vedioplayer.core.data.network
 
 import jcifs.CIFSContext
-import jcifs.Config
 import jcifs.context.BaseContext
 import jcifs.smb.NtlmPasswordAuthenticator
 import jcifs.smb.SmbFile
@@ -11,9 +10,9 @@ import kotlinx.coroutines.withContext
 open class SmbClient {
 
     init {
-        Config.setProperty("jcifs.smb.client.responseTimeout", "30000")
-        Config.setProperty("jcifs.smb.client.connTimeout", "15000")
-        Config.setProperty("jcifs.smb.client.soTimeout", "30000")
+        System.setProperty("jcifs.smb.client.responseTimeout", "30000")
+        System.setProperty("jcifs.smb.client.connTimeout", "15000")
+        System.setProperty("jcifs.smb.client.soTimeout", "30000")
     }
 
     private var context: CIFSContext? = null
