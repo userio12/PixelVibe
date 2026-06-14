@@ -38,8 +38,8 @@ open class PlaybackEngine(
     private val _state = MutableStateFlow(PlaybackState())
     open val state: StateFlow<PlaybackState> = _state.asStateFlow()
 
-    open val audioSessionId: Int get() = player.audioSessionId
-    open val playerRef: Player get() = player
+    open val audioSessionId: Int get() = player!!.audioSessionId
+    open val playerRef: Player get() = player!!
 
     private var isReleased = false
     private var player: ExoPlayer? = null

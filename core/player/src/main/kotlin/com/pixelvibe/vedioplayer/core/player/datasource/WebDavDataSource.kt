@@ -64,8 +64,8 @@ class WebDavDataSource : DataSource {
         return length
     }
 
-    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-        return inputStream?.read(buffer, offset, length) ?: -1
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Long {
+        return (inputStream?.read(buffer, offset, length) ?: -1).toLong()
     }
 
     override fun getUri(): Uri = uri ?: Uri.EMPTY
@@ -85,6 +85,6 @@ class WebDavDataSource : DataSource {
     override fun addTransferListener(transferListener: TransferListener) {}
 
     class Factory : DataSource.Factory {
-        override fun create(): DataSource = WebDavDataSource()
+        override fun createDataSource(): DataSource = WebDavDataSource()
     }
 }

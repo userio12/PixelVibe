@@ -48,8 +48,8 @@ class FtpDataSource : DataSource {
         return C.LENGTH_UNSET
     }
 
-    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-        return inputStream?.read(buffer, offset, length) ?: -1
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Long {
+        return (inputStream?.read(buffer, offset, length) ?: -1).toLong()
     }
 
     override fun getUri(): Uri = uri ?: Uri.EMPTY
@@ -75,6 +75,6 @@ class FtpDataSource : DataSource {
     override fun addTransferListener(transferListener: TransferListener) {}
 
     class Factory : DataSource.Factory {
-        override fun create(): DataSource = FtpDataSource()
+        override fun createDataSource(): DataSource = FtpDataSource()
     }
 }

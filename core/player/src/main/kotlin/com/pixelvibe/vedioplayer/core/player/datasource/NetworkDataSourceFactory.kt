@@ -8,7 +8,7 @@ import androidx.media3.datasource.TransferListener
 
 class NetworkDataSourceFactory : DataSource.Factory {
 
-    override fun create(): DataSource {
+    override fun createDataSource(): DataSource {
         return RoutingDataSource()
     }
 
@@ -26,13 +26,13 @@ class NetworkDataSourceFactory : DataSource.Factory {
                 "webdav" -> WebDavDataSource.Factory()
                 else -> DefaultHttpDataSource.Factory()
             }
-            val ds = factory.create()
+            val ds = factory.createDataSource()
             delegate = ds
             return ds.open(dataSpec)
         }
 
-        override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-            return delegate?.read(buffer, offset, length) ?: -1
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Long {
+            return delegate?.read(buffer, offset, length) ?: -1L
         }
 
         override fun getUri(): Uri = delegate?.uri ?: openedUri
